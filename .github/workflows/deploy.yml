@@ -1,0 +1,24 @@
+name: deploy
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy to Hetzner via rsync
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          rsync -az --delete \
+            --exclude '.git' --exclude '.github' \
+            -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=accept-new" \
+            ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/

@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b3d4f">
+<title>Tankmate — your aquarium co-pilot</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <div class="brand">🐟 <b>Tankmate</b></div>
+  <div class="tankname" id="tankname">Fluval Flex 57 L</div>
+</header>
+
+<main>
+  <!-- LOG TAB -->
+  <section id="tab-log" class="tab active">
+    <h1>Log a water test</h1>
+    <p class="sub">Enter what your kit reads. Tankmate tells you what to <em>do</em> — not just stores a number.</p>
+    <form id="testform" class="card">
+      <div class="row"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="grid2">
+        <div><label>NH₃ ammonia (ppm)</label><input type="number" step="0.01" id="f-nh3" placeholder="0"></div>
+        <div><label>NO₂ nitrite (ppm)</label><input type="number" step="0.01" id="f-no2" placeholder="0"></div>
+        <div><label>NO₃ nitrate (ppm)</label><input type="number" step="1" id="f-no3" placeholder="10"></div>
+        <div><label>KH (dKH)</label><input type="number" step="1" id="f-kh" placeholder="7"></div>
+        <div><label>pH</label><input type="number" step="0.1" id="f-ph" placeholder="7.4"></div>
+        <div><label>GH (dGH)</label><input type="number" step="1" id="f-gh" placeholder=""></div>
+        <div><label>Temp (°C)</label><input type="number" step="0.1" id="f-temp" placeholder="25"></div>
+      </div>
+      <textarea id="f-note" placeholder="Note (e.g. 'added 4 neons', 'found dead shrimp')"></textarea>
+      <button type="submit">Save & read verdict</button>
+    </form>
+    <div id="verdicts"></div>
+    <h2>History</h2>
+    <div id="history" class="history"></div>
+  </section>
+
+  <!-- TRENDS TAB -->
+  <section id="tab-trends" class="tab">
+    <h1>Trends</h1>
+    <p class="sub">The rate of change matters more than any single reading.</p>
+    <div id="trend-cards"></div>
+    <div class="card"><canvas id="chart" height="180"></canvas><div class="legend" id="legend"></div></div>
+  </section>
+
+  <!-- FEEDING TAB -->
+  <section id="tab-feed" class="tab">
+    <h1>Feeding</h1>
+    <div id="feed-today" class="card hero"></div>
+    <h2>Daily schedule</h2>
+    <div class="card">
+      <p><b>Morning</b> — Tetra Micro Granules, one 3-finger pinch (gone in 60 s). If food hits the bottom, it was too much.</p>
+      <p><b>After lights-out</b> — ONE item from the rotation below. <em>If in doubt, feed less.</em></p>
+    </div>
+    <h2>Sinking rotation</h2>
+    <div id="rotation"></div>
+  </section>
+
+  <!-- PLAYBOOK TAB -->
+  <section id="tab-playbook" class="tab">
+    <h1>Incident playbook</h1>
+    <p class="sub">Almost every freshwater emergency has the same first move: a partial water change.</p>
+    <div id="playbook"></div>
+  </section>
+
+  <!-- HOLIDAY TAB -->
+  <section id="tab-holiday" class="tab">
+    <h1>Holiday handover</h1>
+    <p class="sub">A friend-proof sheet for when you're away. No app does this — that's the point.</p>
+    <div class="card">
+      <div class="row"><label>Days away</label><input type="number" id="h-days" value="7" min="1"></div>
+      <div class="row"><label>Friend's name</label><input type="text" id="h-friend" placeholder="(optional)"></div>
+      <button id="h-gen">Generate handover sheet</button>
+    </div>
+    <div id="handover"></div>
+  </section>
+</main>
+
+<nav class="tabbar">
+  <button data-tab="log" class="active">📋<span>Log</span></button>
+  <button data-tab="trends">📈<span>Trends</span></button>
+  <button data-tab="feed">🍤<span>Feed</span></button>
+  <button data-tab="playbook">🚨<span>Playbook</span></button>
+  <button data-tab="holiday">✈️<span>Holiday</span></button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>

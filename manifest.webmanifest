@@ -1,0 +1,12 @@
+{
+  "name": "Tankmate — aquarium co-pilot",
+  "short_name": "Tankmate",
+  "description": "Logs your water tests and tells you what to DO — verdicts, trends, feeding, incident playbook and a holiday handover sheet.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#0b1416",
+  "theme_color": "#0b3d4f",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
