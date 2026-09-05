@@ -18,7 +18,13 @@ jobs:
           mkdir -p ~/.ssh
           printf '%s\n' "$DEPLOY_KEY" > ~/.ssh/deploy
           chmod 600 ~/.ssh/deploy
+          # Pin the server's host key. Every run gets a fresh runner with an
+          # empty known_hosts, so accept-new trusted whatever answered on the
+          # first connection -- i.e. no verification at all, and an active
+          # MITM could have captured the deploy key.
+          printf '%s\n' 'joanmarcriera.es ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDADOLZ1tckioNFzGd/GZsoyEg7d80nZ+HBnWvPt6ufp' > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
           rsync -az --delete \
             --exclude '.git' --exclude '.github' \
-            -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=accept-new" \
+            -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/
