@@ -6,7 +6,6 @@ Built and smoke-tested 2026-06-24. Seeded with Marc's real Fluval Flex 57 L data
 
 ## Run it locally (live check, ~10 seconds)
 ```bash
-cd dist/tankmate
 python3 -m http.server 8765
 # open http://localhost:8765
 ```
