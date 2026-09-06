@@ -24,7 +24,10 @@ jobs:
           # MITM could have captured the deploy key.
           printf '%s\n' 'joanmarcriera.es ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDADOLZ1tckioNFzGd/GZsoyEg7d80nZ+HBnWvPt6ufp' > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
+          # 'apple/' is the native iOS app (Xcode project + Swift sources); it is
+          # not web content and must never be published to the site root. The
+          # rsync uses --delete, so an unexcluded apple/ would appear live.
           rsync -az --delete \
-            --exclude '.git' --exclude '.github' \
+            --exclude '.git' --exclude '.github' --exclude 'apple' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/

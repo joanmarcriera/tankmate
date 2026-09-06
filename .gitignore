@@ -1,2 +1,8 @@
 .DS_Store
 ._*
+
+# Xcode / native iOS app (apple/)
+apple/build/
+apple/DerivedData/
+apple/**/xcuserdata/
+*.xcuserstate
