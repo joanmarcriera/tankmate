@@ -1,0 +1,18 @@
+// App Store edition. There is only one edition today — unlike Distavo (Direct /
+// App Store / Setapp), Tankmate iOS ships through the App Store only, so there
+// is no third-party updater and no edition flag to keep apart.
+//
+// The web payload is stripped of the Lemon Squeezy "Buy me a coffee" checkout at
+// build time (scripts/prepare-web-bundle.py). App Review Guideline 3.1.1 forbids
+// steering users to an outside payment flow; the link is REMOVED from the
+// bundled HTML, not merely hidden, and the script fails the build if any trace
+// of it survives.
+PRODUCT_BUNDLE_IDENTIFIER = uk.co.riera.tankmate
+
+// Push notifications are stubbed but OFF. Switching them on needs all three of:
+//   1. the Push Notifications capability on the App ID in the Developer portal,
+//   2. a provisioning profile regenerated with that capability,
+//   3. the two lines below uncommented.
+// Enabling the entitlement before (1) and (2) makes signing fail.
+// CODE_SIGN_ENTITLEMENTS = Tankmate-Push.entitlements
+// SWIFT_ACTIVE_COMPILATION_CONDITIONS = REMOTE_PUSH_ENABLED
