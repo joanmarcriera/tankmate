@@ -1,0 +1,19 @@
+{
+  "bundleId": "uk.co.riera.tankmate",
+  "subtitle": "Verdicts for your fish tank",
+  "promotionalText": "Log a water test and Tankmate tells you what to do about it — same day, next water change, or nothing at all. Works with no signal, no account and no cloud.",
+  "description": "Tankmate reads your water tests the way an experienced fishkeeper would. You enter what your kit shows; it tells you what to DO — not just stores a number on a chart.\n\nWHAT IT ACTUALLY TELLS YOU\n• Ammonia or nitrite above zero → the size and urgency of the water change\n• KH dropping under 5 dKH → the warning before a pH crash, not after it\n• Nitrate climbing → how fast, in ppm per week, and whether that rate is a problem\n• Temperature and pH read in context, because stability beats chasing an ideal number\n\nTHE RATE MATTERS MORE THAN THE READING\nOne nitrate number means very little. Tankmate works out how fast it is climbing between tests and says whether your maintenance is keeping up.\n\nWHAT ELSE IS IN IT\n• Feeding — a sinking-food rotation so you are not feeding the same thing every night\n• Incident playbook — what to do first when something is wrong, before you go looking for advice\n• Holiday handover — generates a friend-proof sheet for whoever is feeding your fish while you are away, with a pill-organiser map so they cannot overfeed\n\nPRIVATE BY DESIGN\n• Every test, note and reminder stays on your iPhone\n• No account, no sign-up, no cloud, no telemetry, no ads\n• Nothing is ever uploaded, because the app makes no network requests at all\n• It works exactly the same with aeroplane mode on\n\nNATIVE REMINDERS\nSet a weekly reminder to test the water. It is scheduled on your device — nothing is sent anywhere.\n\nBuilt for freshwater tropical community tanks by someone who keeps one.",
+  "keywords": "aquarium,fish tank,water test,nitrate,ammonia,nitrite,freshwater,fishkeeping,aquascape,tropical",
+  "supportUrl": "https://tankmate.joanmarcriera.es/support/",
+  "marketingUrl": "https://tankmate.joanmarcriera.es/",
+  "privacyPolicyUrl": "https://tankmate.joanmarcriera.es/privacy/",
+  "copyright": "© 2026 Joan Marc Riera Duocastella",
+  "primaryCategory": "LIFESTYLE",
+  "ageRating": "4+",
+  "priceTier": "free",
+  "_notes": {
+    "privacyNutritionLabel": "Data Not Collected — the app has no network access, so no data type can be transmitted. Matches Resources/PrivacyInfo.xcprivacy.",
+    "reviewNotes": "Tankmate is a local-first aquarium log. No account is needed and there is nothing to sign in to. All content is bundled in the app; it works with the device offline.",
+    "guideline42": "Not a bare web wrapper: the app ships its content offline, has a native launch experience, and schedules local notification reminders that a website cannot. See apple/docs/APP-STORE-CONNECT.md."
+  }
+}
