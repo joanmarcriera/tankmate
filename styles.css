@@ -4,8 +4,13 @@
 }
 *{box-sizing:border-box} html,body{margin:0}
 body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:74px}
+/* The top padding picks up the device's safe-area inset so the header clears the
+   status bar / Dynamic Island when Tankmate runs full-screen: added to the Home
+   Screen on iOS, or inside the native iOS app. env() is 0 in a normal browser
+   tab, so this is a no-op on the website. */
 header{position:sticky;top:0;z-index:5;display:flex;justify-content:space-between;align-items:center;
-  padding:14px 18px;background:linear-gradient(180deg,var(--acc-d),#0b1416);border-bottom:1px solid var(--line)}
+  padding:14px 18px;padding-top:calc(14px + env(safe-area-inset-top));
+  background:linear-gradient(180deg,var(--acc-d),#0b1416);border-bottom:1px solid var(--line)}
 .brand{font-size:18px} .brand b{letter-spacing:-.01em}
 .tankname{font-size:13px;color:var(--mut)}
 main{max-width:680px;margin:0 auto;padding:18px}
