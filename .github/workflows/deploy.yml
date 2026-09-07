@@ -28,6 +28,6 @@ jobs:
           # not web content and must never be published to the site root. The
           # rsync uses --delete, so an unexcluded apple/ would appear live.
           rsync -az --delete \
-            --exclude '.git' --exclude '.github' --exclude 'apple' \
+            --exclude '.git' --exclude '.github' --exclude 'apple' --exclude '*.md' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/
