@@ -32,3 +32,8 @@ Per the brainstorm, these are the Pro tier once there are real users: multi-tank
 
 ## Honest status
 This PWA validates the **product thesis** (judgement, not storage) at £0 cost-to-release. The brainstorm's longer-term recommendation is a Flutter/native build for proper iOS notifications + camera; treat this PWA as the live proof-of-concept and the review-gap pilot (candidate C7). If forum feedback is warm, graduate to native; if it's flat, you've spent £0 finding out.
+
+<!-- vikunja-tracking -->
+## Tracking
+
+Vikunja project **65 · Tankmate native (iOS)** — https://familia.riera.co.uk/projects/65
