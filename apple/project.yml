@@ -88,6 +88,8 @@ schemes:
         TankmateUITests: [test]
     run:
       config: Debug
+      # Local-only StoreKit testing for Tankmate Pro (not an App Store product).
+      storeKitConfiguration: Tankmate.storekit
     test:
       config: Debug
       targets:

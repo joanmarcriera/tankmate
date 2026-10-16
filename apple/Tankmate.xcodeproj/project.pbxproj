@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2AC788EEBF88A4EA422C6378 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C4A3B2D75A6E711C8BBC77F7 /* Assets.xcassets */; };
+		340CAE42C32EAB088A7C8D91 /* ProStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63101159EDF9D6CD4CEA02B0 /* ProStore.swift */; };
 		53C35EA9BE2D34FACC9DEEA4 /* TankmateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0C395487F710DD23FDC6F9 /* TankmateApp.swift */; };
 		6447B69CC8284F7D614073CC /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46328C27A89F157E344346D /* ReminderScheduler.swift */; };
 		6C4A456391F333B5E1981768 /* TankmateUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E596175AE46433DBA96964 /* TankmateUITests.swift */; };
@@ -34,6 +35,7 @@
 		4C2412AC7D8B7DFE2DCCF571 /* WebAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAppView.swift; sourceTree = "<group>"; };
 		4C96B0FBFB34973BD9622AD1 /* PushRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrar.swift; sourceTree = "<group>"; };
 		60C16955CC9C6134DC8CFA33 /* TankmateUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TankmateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		63101159EDF9D6CD4CEA02B0 /* ProStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStore.swift; sourceTree = "<group>"; };
 		87931D26660478A4E5FA15B4 /* AppStore.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppStore.xcconfig; sourceTree = "<group>"; };
 		87E596175AE46433DBA96964 /* TankmateUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TankmateUITests.swift; sourceTree = "<group>"; };
 		A86596F7162FEFFDE2F6D1C5 /* BundledWebSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledWebSchemeHandler.swift; sourceTree = "<group>"; };
@@ -64,6 +66,7 @@
 			isa = PBXGroup;
 			children = (
 				A86596F7162FEFFDE2F6D1C5 /* BundledWebSchemeHandler.swift */,
+				63101159EDF9D6CD4CEA02B0 /* ProStore.swift */,
 				4C96B0FBFB34973BD9622AD1 /* PushRegistrar.swift */,
 				B46328C27A89F157E344346D /* ReminderScheduler.swift */,
 				FDB146058B116B7BA851397B /* RemindersView.swift */,
@@ -222,6 +225,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				DF5FF4671D9799579BA225ED /* BundledWebSchemeHandler.swift in Sources */,
+				340CAE42C32EAB088A7C8D91 /* ProStore.swift in Sources */,
 				87F6FDB6A60233796E2D3D00 /* PushRegistrar.swift in Sources */,
 				6447B69CC8284F7D614073CC /* ReminderScheduler.swift in Sources */,
 				99F5524A4D0A23CF69949558 /* RemindersView.swift in Sources */,
