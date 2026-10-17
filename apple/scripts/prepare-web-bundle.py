@@ -33,7 +33,7 @@ from pathlib import Path
 # sw.js is deliberately NOT bundled: WKWebView does not run service workers for
 # custom URL schemes, and the app does not need one — every asset is already
 # inside the bundle. app.js already wraps its registration in .catch().
-ASSETS = ["index.html", "app.js", "styles.css", "icon.svg", "manifest.webmanifest"]
+ASSETS = ["index.html", "app.js", "tanks.js", "styles.css", "icon.svg", "manifest.webmanifest"]
 
 # Anything matching these must not survive into the bundled HTML.
 FORBIDDEN = ["lemonsqueezy", "coffee-btn", "checkout/buy"]

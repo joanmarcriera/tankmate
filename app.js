@@ -2,7 +2,6 @@
    The differentiator vs every existing app: it gives VERDICTS and ACTIONS,
    not just stored numbers. Rules encoded from real freshwater chemistry. */
 
-const STORE = 'tankmate.tests.v1';
 const TANK = 'tankmate.tank.v1';
 
 /* ---------- seed: Marc's real Fluval Flex 57 L, 2026-06-11 ---------- */
@@ -13,10 +12,18 @@ const SEED = [
 ];
 
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const load = () => { try { return JSON.parse(localStorage.getItem(STORE)) || null } catch { return null } };
-const save = (a) => localStorage.setItem(STORE, JSON.stringify(a));
+
+/* ---------- MULTI-TANK (tanks.js). Free tier = the default tank only; the native iOS
+   shell reports Pro via window.tankmateApplyNative({isPro}). On the PWA nothing sets it,
+   so the PWA stays single-tank. ---------- */
+let isPro = false;
+let registry = TankStore.ensureRegistry(localStorage, document.getElementById('tankname').textContent.trim());
+let activeId = TankStore.effectiveActive(registry, isPro);
+const STORE_NOW = () => TankStore.testsKey(activeId);
+const load = () => { try { return JSON.parse(localStorage.getItem(STORE_NOW())) || null } catch { return null } };
+const save = (a) => localStorage.setItem(STORE_NOW(), JSON.stringify(a));
 let tests = load();
-if (!tests) { tests = SEED.slice(); save(tests); }
+if (!tests) { tests = activeId === TankStore.DEFAULT_ID ? SEED.slice() : []; save(tests); }
 
 /* ---------- VERDICT ENGINE (the moat) ---------- */
 // returns {level:'good|warn|bad', tag, meaning, action}
@@ -210,9 +217,51 @@ function show(tab){
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
 document.getElementById('h-gen').onclick=renderHandover;
 
+function repaint(){
+  renderHistory(); renderTrends();
+  const v=document.getElementById('verdicts');
+  if(tests.length) renderVerdicts([...tests].sort((a,b)=>b.date.localeCompare(a.date))[0], v); else v.innerHTML='';
+  renderTankName();
+}
+
+/* ---------- tank switcher + native bridge hooks ---------- */
+function renderTankName(){
+  const el=document.getElementById('tankname');
+  const t=registry.tanks.find(x=>x.id===activeId)||registry.tanks[0];
+  if(!window.tankmateNativeShell){ el.textContent=t.name; return; }   // PWA: plain label
+  const opts=registry.tanks.filter(x=>isPro||x.id===TankStore.DEFAULT_ID)
+    .map(x=>`<option value="${esc(x.id)}"${x.id===activeId?' selected':''}>${esc(x.name)}</option>`).join('');
+  el.innerHTML=`<select id="tankswitch" aria-label="Tank">${opts}<option value="__add">＋ Add tank${isPro?'':' (Pro)'}</option></select>`;
+  document.getElementById('tankswitch').onchange=(e)=>{
+    const v=e.target.value;
+    if(v==='__add'){ e.target.value=activeId; window.webkit.messageHandlers.tankmate.postMessage({action:'addTank',tankCount:registry.tanks.length}); }
+    else tankmateSwitch(v);
+  };
+}
+function tankmateSwitch(id){
+  registry=TankStore.setActive(localStorage,id); activeId=TankStore.effectiveActive(registry,isPro);
+  tests=load()||[]; repaint();
+}
+// Called by the native shell. Pro state is pushed in; it is never read back from storage.
+window.tankmateApplyNative=function(o){
+  window.tankmateNativeShell=true; isPro=!!(o&&o.isPro);
+  activeId=TankStore.effectiveActive(registry,isPro);
+  tests=load()||(activeId===TankStore.DEFAULT_ID?SEED.slice():[]); repaint();
+};
+// Native has already checked the entitlement before calling this.
+window.tankmateAddTank=function(name){
+  try{ TankStore.addTank(localStorage,name); }catch(e){ return false; }
+  registry=TankStore.ensureRegistry(localStorage); activeId=TankStore.effectiveActive(registry,isPro);
+  tests=load()||[]; repaint(); return true;
+};
+// Snapshot for the native charts / reminders sheets.
+window.tankmateState=function(){
+  const t=registry.tanks.find(x=>x.id===activeId);
+  return {active:{id:activeId,name:t?t.name:''},tanks:registry.tanks,tests:tests};
+};
+
 // initial paint
-renderHistory(); renderTrends(); renderFeeding(); renderPlaybook();
-if(tests.length) renderVerdicts([...tests].sort((a,b)=>b.date.localeCompare(a.date))[0], document.getElementById('verdicts'));
+repaint(); renderFeeding(); renderPlaybook();
 window.addEventListener('resize',drawChart);
 
 // PWA
