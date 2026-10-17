@@ -54,4 +54,59 @@ final class TankmateUITests: XCTestCase {
         XCTAssertTrue(app.switches["Weekly water-test reminder"].waitForExistence(timeout: 5),
                       "The reminders sheet opened without its toggle.")
     }
+
+    // MARK: - Tankmate Pro
+
+    private func attach(_ name: String) {
+        let screenshot = XCUIScreen.main.screenshot()
+        let shot = XCTAttachment(screenshot: screenshot)
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+        // Optional: also write PNGs to a folder (pass TEST_RUNNER_TANKMATE_SHOT_DIR=<dir>
+        // to xcodebuild) for people who do not open the .xcresult.
+        if let dir = ProcessInfo.processInfo.environment["TANKMATE_SHOT_DIR"] {
+            try? FileManager.default.createDirectory(atPath: dir, withIntermediateDirectories: true)
+            try? screenshot.pngRepresentation.write(to: URL(fileURLWithPath: dir).appendingPathComponent("\(name).png"))
+        }
+    }
+
+    /// Free tier: the Charts control exists but leads to the paywall, with the
+    /// controls App Review requires (price/restore/links).
+    func testFreeTierChartsOpensPaywall() {
+        let app = XCUIApplication()
+        app.launch()
+        let charts = app.webViews.buttons["Charts"]
+        XCTAssertTrue(charts.waitForExistence(timeout: 20))
+        charts.tap()
+        XCTAssertTrue(app.navigationBars["Pro"].waitForExistence(timeout: 10), "Paywall did not open")
+        XCTAssertTrue(app.buttons["paywall.restore"].exists, "Restore Purchases is mandatory")
+        XCTAssertTrue(app.links["Privacy"].exists || app.buttons["Privacy"].exists)
+        attach("paywall-free")
+    }
+
+    /// Pro (forced by the DEBUG-only launch argument): charts and per-tank reminders open.
+    func testProShowsChartsAndTankReminders() {
+        let app = XCUIApplication()
+        app.launchArguments = ["-uiTestForcePro"]
+        app.launch()
+
+        let charts = app.webViews.buttons["Charts"]
+        XCTAssertTrue(charts.waitForExistence(timeout: 20))
+        // Entitlement is pushed in after the page loads; give it a moment.
+        sleep(2)
+        charts.tap()
+        sleep(2)
+        // The sheet's parameter picker only exists on the Pro charts screen. (Whether a
+        // line shows depends on how recent the seed data is, so don't assert on that.)
+        XCTAssertTrue(app.buttons["charts.parameter"].waitForExistence(timeout: 10), "Charts did not open for Pro")
+        attach("charts-pro")
+        app.buttons["Done"].tap()
+
+        let bell = app.webViews.buttons["Reminders"]
+        XCTAssertTrue(bell.waitForExistence(timeout: 10))
+        bell.tap()
+        XCTAssertTrue(app.buttons["reminders.add"].waitForExistence(timeout: 10), "Per-tank reminder form missing for Pro")
+        attach("reminders-pro")
+    }
 }

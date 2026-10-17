@@ -1,6 +1,6 @@
 # Tankmate Pro - design (Vikunja #1962)
 
-Status: design + StoreKit scaffolding. No App Store Connect product exists; creating the
+Status: built and tested locally (multi-tank, charts, per-tank reminders, paywall, StoreKit 2 gate); see the build notes at the end. No App Store Connect product exists; creating the
 subscription group, product and price is a gate for Marc (see end).
 
 ## Offer
@@ -52,3 +52,15 @@ the moat and the acquisition hook. Pro sells convenience for people with more th
   price in App Store Connect; it must be submitted alongside a build.
 - Paid Apps Agreement + tax/banking in App Store Connect (required before any IAP works).
 - Final price and whether to offer a free trial.
+
+## Build notes (2026-10-17)
+- Default tank keeps the legacy `tankmate.tests.v1` key (no data moved); extra tanks use
+  `tankmate.tank.<id>.tests.v1`. This replaces the "migrate into tank default" idea above:
+  nothing is rewritten, so nothing can be lost.
+- Entitlement is enforced in native code (`ProGate`, `ProStore`); the page only receives the flag.
+- Reminders cadence is daily or weekly (calendar triggers cannot do "every N days").
+- Terms of Use links to Apple's standard EULA; a custom EULA page is optional.
+- Tests: `node --test apple/WebTests/tanks.test.js`; `xcodebuild test -scheme Tankmate` (unit + UI);
+  scheme `TankmateUnitTests` = unit only. StoreKitTest needs an iOS 27 simulator here (26.5 fails with SKInternalErrorDomain 3).
+- `-uiTestForcePro` launch argument is DEBUG-only (UI tests).
+- Screenshots: `docs/pro-screens/`.
