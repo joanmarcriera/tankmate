@@ -1,10 +1,11 @@
 //  ProStore.swift
 //  StoreKit 2 scaffolding for "Tankmate Pro" (auto-renewing yearly subscription).
 //
-//  STATUS: scaffolding only. Nothing in the UI reads `isPro` yet, and the product
-//  below does NOT exist in App Store Connect (creating products/prices is a gate
-//  that needs Marc). See apple/docs/TANKMATE-PRO.md for the design. Until the
-//  product exists, `load()` simply finds no products and the app stays free tier.
+//  STATUS: wired (paywall, tank limit, charts, extra reminders read `isPro`). The
+//  product below does NOT exist in App Store Connect yet (creating products/prices
+//  is a gate that needs Marc); tests and local runs use Tankmate.storekit. Until
+//  the product exists, `load()` finds no products and the app stays free tier.
+//  See apple/docs/TANKMATE-PRO.md for the design.
 //
 //  Usage:
 //      @StateObject var pro = ProStore()          // once, at the App root
@@ -31,7 +32,14 @@ final class ProStore: ObservableObject {
 
     private var updatesTask: Task<Void, Never>?
 
-    init() {
+    #if DEBUG
+    /// UI tests only: `-uiTestForcePro` shows the Pro screens without a purchase. Compiled
+    /// out of Release builds, so it can never ship as a bypass.
+    private let forcedPro = ProcessInfo.processInfo.arguments.contains("-uiTestForcePro")
+    #endif
+
+    /// - Parameter autoLoad: tests pass false to control when products load.
+    init(autoLoad: Bool = true) {
         // Renewals, refunds and family-sharing changes arrive out of band.
         updatesTask = Task { [weak self] in
             for await update in Transaction.updates {
@@ -39,7 +47,7 @@ final class ProStore: ObservableObject {
                 await self?.refreshEntitlement()
             }
         }
-        Task { await load() }
+        if autoLoad { Task { await load() } }
     }
 
     deinit { updatesTask?.cancel() }
@@ -74,15 +82,27 @@ final class ProStore: ObservableObject {
         await refreshEntitlement()
     }
 
-    private func refreshEntitlement() async {
+    /// Pure entitlement rule (unit-tested): the right product, not refunded/revoked,
+    /// and not past its expiry. StoreKit's currentEntitlements already omits expired
+    /// transactions; checking `expirationDate` as well makes the rule explicit and
+    /// independent of that behaviour.
+    nonisolated static func isEntitling(productID: String, revocationDate: Date?, expirationDate: Date?, now: Date = Date()) -> Bool {
+        guard productID == yearlyProductID, revocationDate == nil else { return false }
+        if let expirationDate { return expirationDate > now }
+        return true
+    }
+
+    func refreshEntitlement() async {
         var active = false
         for await result in Transaction.currentEntitlements {
             if case .verified(let t) = result,
-               t.productID == Self.yearlyProductID,
-               t.revocationDate == nil {
+               Self.isEntitling(productID: t.productID, revocationDate: t.revocationDate, expirationDate: t.expirationDate) {
                 active = true
             }
         }
+        #if DEBUG
+        if forcedPro { active = true }
+        #endif
         isPro = active
     }
 }

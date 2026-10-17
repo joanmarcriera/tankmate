@@ -8,11 +8,55 @@
 import SwiftUI
 import WebKit
 
-struct WebAppView: UIViewRepresentable {
-    /// Fired when the injected native control in the web header is tapped.
-    var onOpenReminders: () -> Void
+/// What the web content can ask the native shell to do.
+enum BridgeEvent: Equatable {
+    case openReminders, openCharts, showPaywall
+    case addTank(count: Int)
 
-    func makeCoordinator() -> Coordinator { Coordinator(onOpenReminders: onOpenReminders) }
+    /// Parses a WKScriptMessage body; unknown/malformed messages are ignored.
+    static func parse(_ body: Any) -> BridgeEvent? {
+        guard let dict = body as? [String: Any], let action = dict["action"] as? String else { return nil }
+        switch action {
+        case "openReminders": return .openReminders
+        case "openCharts": return .openCharts
+        case "showPaywall": return .showPaywall
+        case "addTank": return .addTank(count: dict["tankCount"] as? Int ?? 1)
+        default: return nil
+        }
+    }
+}
+
+/// Native -> web calls. Holds the web view weakly; the SwiftUI view owns it.
+@MainActor
+final class WebBridge: ObservableObject {
+    fileprivate weak var webView: WKWebView?
+
+    /// Push the entitlement into the page (the page never stores it).
+    func pushPro(_ isPro: Bool) {
+        webView?.evaluateJavaScript("window.tankmateApplyNative && window.tankmateApplyNative({isPro:\(isPro)})")
+    }
+
+    /// Snapshot of the active tank and its tests, from the page's own storage.
+    func fetchState() async -> TankState? {
+        guard let webView else { return nil }
+        let json = try? await webView.evaluateJavaScript("JSON.stringify(window.tankmateState ? window.tankmateState() : null)") as? String
+        guard let json, let data = json.data(using: .utf8) else { return nil }
+        return try? JSONDecoder().decode(TankState.self, from: data)
+    }
+
+    func addTank(name: String) {
+        let escaped = name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "'", with: "\\'")
+        webView?.evaluateJavaScript("window.tankmateAddTank && window.tankmateAddTank('\(escaped)')")
+    }
+}
+
+struct WebAppView: UIViewRepresentable {
+    let bridge: WebBridge
+    let isPro: Bool
+    /// Fired when the page asks for something native.
+    var onEvent: (BridgeEvent) -> Void
+
+    func makeCoordinator() -> Coordinator { Coordinator(onEvent: onEvent) }
 
     func makeUIView(context: Context) -> WKWebView {
         let config = WKWebViewConfiguration()
@@ -49,12 +93,18 @@ struct WebAppView: UIViewRepresentable {
         webView.scrollView.contentInsetAdjustmentBehavior = .never
         webView.scrollView.showsVerticalScrollIndicator = false
 
+        bridge.webView = webView
+        context.coordinator.isPro = isPro
         webView.load(URLRequest(url: BundledWebSchemeHandler.startURL))
         return webView
     }
 
     func updateUIView(_ webView: WKWebView, context: Context) {
-        context.coordinator.onOpenReminders = onOpenReminders
+        context.coordinator.onEvent = onEvent
+        if context.coordinator.isPro != isPro {
+            context.coordinator.isPro = isPro
+            bridge.pushPro(isPro)
+        }
     }
 
     static func dismantleUIView(_ webView: WKWebView, coordinator: Coordinator) {
@@ -83,7 +133,7 @@ struct WebAppView: UIViewRepresentable {
         'html.tankmate-native .tankname{white-space:nowrap;flex:0 1 auto}' +
         // 44×44 is Apple's minimum tap target; the negative vertical margin
         // keeps it from making the header taller than it is on the web.
-        'html.tankmate-native #native-reminders{background:none;border:0;padding:0;' +
+        'html.tankmate-native #native-reminders,html.tankmate-native #native-charts{background:none;border:0;padding:0;' +
         'margin:-8px 0;width:44px;height:44px;font-size:20px;line-height:1;' +
         'flex:0 0 auto;color:inherit;cursor:pointer;-webkit-appearance:none}';
       document.head.appendChild(style);
@@ -97,27 +147,45 @@ struct WebAppView: UIViewRepresentable {
         window.webkit.messageHandlers.tankmate.postMessage({ action: 'openReminders' });
       });
       header.appendChild(b);
+
+      var c = document.createElement('button');
+      c.id = 'native-charts';
+      c.type = 'button';
+      c.textContent = '\\u{1F4CA}';
+      c.setAttribute('aria-label', 'Charts');
+      c.addEventListener('click', function () {
+        window.webkit.messageHandlers.tankmate.postMessage({ action: 'openCharts' });
+      });
+      header.insertBefore(c, b);
       document.documentElement.classList.add('tankmate-native');
+      // Tell app.js it is inside the native shell (shows the tank switcher). The
+      // real Pro state is pushed by native right after the page finishes loading.
+      if (window.tankmateApplyNative) window.tankmateApplyNative({ isPro: false });
     })();
     """
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate, WKScriptMessageHandler {
         static let messageName = "tankmate"
 
-        var onOpenReminders: () -> Void
+        var onEvent: (BridgeEvent) -> Void
+        var isPro = false
         /// Held so the handler outlives makeUIView; WKWebViewConfiguration does
         /// not retain scheme handlers strongly enough to rely on.
         var schemeHandler: BundledWebSchemeHandler?
 
-        init(onOpenReminders: @escaping () -> Void) {
-            self.onOpenReminders = onOpenReminders
+        init(onEvent: @escaping (BridgeEvent) -> Void) {
+            self.onEvent = onEvent
+        }
+
+        /// The page has run app.js and the injected script; give it the real entitlement.
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            webView.evaluateJavaScript("window.tankmateApplyNative && window.tankmateApplyNative({isPro:\(isPro)})")
         }
 
         func userContentController(_ controller: WKUserContentController,
                                    didReceive message: WKScriptMessage) {
-            guard let body = message.body as? [String: Any],
-                  body["action"] as? String == "openReminders" else { return }
-            onOpenReminders()
+            guard let event = BridgeEvent.parse(message.body) else { return }
+            onEvent(event)
         }
 
         /// Keep every in-app navigation inside the bundle. Anything else (an

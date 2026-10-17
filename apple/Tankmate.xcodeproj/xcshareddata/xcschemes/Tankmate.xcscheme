@@ -29,6 +29,20 @@
             buildForAnalyzing = "NO">
             <BuildableReference
                BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B805ABB361A900720314343D"
+               BuildableName = "TankmateTests.xctest"
+               BlueprintName = "TankmateTests"
+               ReferencedContainer = "container:Tankmate.xcodeproj">
+            </BuildableReference>
+         </BuildActionEntry>
+         <BuildActionEntry
+            buildForTesting = "YES"
+            buildForRunning = "NO"
+            buildForProfiling = "NO"
+            buildForArchiving = "NO"
+            buildForAnalyzing = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
                BlueprintIdentifier = "7073131B01B9DB9C3EE82FEE"
                BuildableName = "TankmateUITests.xctest"
                BlueprintName = "TankmateUITests"
@@ -53,6 +67,17 @@
          </BuildableReference>
       </MacroExpansion>
       <Testables>
+         <TestableReference
+            skipped = "NO"
+            parallelizable = "NO">
+            <BuildableReference
+               BuildableIdentifier = "primary"
+               BlueprintIdentifier = "B805ABB361A900720314343D"
+               BuildableName = "TankmateTests.xctest"
+               BlueprintName = "TankmateTests"
+               ReferencedContainer = "container:Tankmate.xcodeproj">
+            </BuildableReference>
+         </TestableReference>
          <TestableReference
             skipped = "NO"
             parallelizable = "NO">

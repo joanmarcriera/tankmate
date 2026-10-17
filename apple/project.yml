@@ -80,19 +80,49 @@ targets:
         GENERATE_INFOPLIST_FILE: YES
         PRODUCT_BUNDLE_IDENTIFIER: uk.co.riera.tankmate.uitests
         TEST_TARGET_NAME: Tankmate
+  # Pure-logic + StoreKitTest unit tests, hosted in the app so @testable works.
+  TankmateTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: Tests
+      - path: Tankmate.storekit
+        buildPhase: resources
+    dependencies:
+      - target: Tankmate
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: uk.co.riera.tankmate.tests
 schemes:
   Tankmate:
     build:
       targets:
         Tankmate: all
         TankmateUITests: [test]
+        TankmateTests: [test]
     run:
       config: Debug
       # Local-only StoreKit testing for Tankmate Pro (not an App Store product).
       storeKitConfiguration: Tankmate.storekit
     test:
       config: Debug
+      storeKitConfiguration: Tankmate.storekit
       targets:
+        - TankmateTests
         - TankmateUITests
     archive:
       config: Release
+  # Unit tests only, with NO scheme-level StoreKit configuration: StoreKitTest's
+  # SKTestSession drives its own session from Tankmate.storekit, and a scheme-level
+  # configuration alongside it breaks the session (SKInternalErrorDomain 3).
+  TankmateUnitTests:
+    build:
+      targets:
+        Tankmate: all
+        TankmateTests: [test]
+    test:
+      config: Debug
+      storeKitConfiguration: Tankmate.storekit
+      targets:
+        - TankmateTests
