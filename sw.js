@@ -1,6 +1,6 @@
 /* Tankmate service worker — offline-first cache. Bump VERSION to invalidate. */
-const VERSION = 'tankmate-v3';
-const ASSETS = ['.', 'index.html', 'styles.css', 'app.js', 'tanks.js', 'manifest.webmanifest', 'icon.svg'];
+const VERSION = 'tankmate-v4';
+const ASSETS = ['.', 'index.html', 'styles.css', 'app.js', 'tanks.js', 'nudge.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));

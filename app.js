@@ -203,6 +203,7 @@ document.getElementById('testform').addEventListener('submit',e=>{
     nh3:g('f-nh3'),no2:g('f-no2'),no3:g('f-no3'),kh:g('f-kh'),ph:g('f-ph'),gh:g('f-gh'),temp:g('f-temp'),
     note:document.getElementById('f-note').value.trim()};
   tests.push(t); save(tests);
+  nudgeAfterSave();
   renderVerdicts(t, document.getElementById('verdicts'));
   renderHistory(); renderTrends();
   document.getElementById('verdicts').scrollIntoView({behavior:'smooth',block:'start'});
@@ -266,3 +267,46 @@ window.addEventListener('resize',drawChart);
 
 // PWA
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+
+/* ---------- INSTALL NUDGE (nudge.js, task 4659) ----------
+   A dismissible bar shown only after the user's first saved test. Chromium: captures
+   beforeinstallprompt and offers a one-tap install. iOS Safari: one-line manual hint.
+   Everything stays on the device: two localStorage flags, nothing is sent anywhere. */
+(function(){
+  if (typeof InstallNudge === 'undefined') return;           // not bundled (e.g. native shell)
+  const N = InstallNudge;
+  const lsGet = k => { try { return localStorage.getItem(k) } catch { return null } };
+  const lsSet = k => { try { localStorage.setItem(k, '1') } catch {} };
+  let deferred = null;
+  const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const state = () => ({
+    savedTests: lsGet(N.FLAG_SAVED) ? 1 : 0, standalone: standalone(), dismissed: !!lsGet(N.FLAG_DISMISSED),
+    native: window.tankmateNativeShell === true,
+    canPrompt: !!deferred, ios: N.isIosSafari(navigator.userAgent, navigator.maxTouchPoints || 0)
+  });
+  function render(){
+    const bar = document.getElementById('installnudge'); if (!bar) return;
+    const mode = N.nudgeMode(state());
+    bar.hidden = !mode;
+    if (!mode) return;
+    document.getElementById('nudge-text').textContent = mode === 'ios'
+      ? 'Keep Tankmate on your home screen: tap Share, then Add to Home Screen.'
+      : 'Keep Tankmate on your home screen for one-tap tests.';
+    document.getElementById('nudge-install').hidden = mode !== 'prompt';
+  }
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; render(); });
+  window.addEventListener('appinstalled', () => { deferred = null; render(); });
+  const bar = document.getElementById('installnudge');
+  if (bar) {
+    document.getElementById('nudge-close').onclick = () => { lsSet(N.FLAG_DISMISSED); render(); };
+    document.getElementById('nudge-install').onclick = async () => {
+      if (!deferred) return;
+      deferred.prompt(); try { await deferred.userChoice } catch {}
+      deferred = null; render();
+    };
+  }
+  // The seed history is not the user's own: count only tests saved through the form.
+  window.nudgeAfterSave = () => { lsSet(N.FLAG_SAVED); render(); };
+  render();
+})();
+function nudgeAfterSave(){ if (window.nudgeAfterSave) window.nudgeAfterSave(); }

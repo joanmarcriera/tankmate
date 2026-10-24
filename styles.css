@@ -61,3 +61,9 @@ canvas{width:100%} .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;c
 /* Native-iOS tank switcher (only rendered when the shell reports itself). */
 #tankswitch{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;
   font:inherit;font-size:13px;padding:4px 6px;max-width:42vw}
+/* Install nudge: dismissible bar above the tab bar, shown after the first saved test. */
+.nudge{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:5;display:flex;align-items:center;gap:8px;
+  max-width:680px;margin:0 auto;padding:10px 12px;background:var(--panel2);border:1px solid var(--acc);border-radius:10px;font-size:13px}
+.nudge[hidden]{display:none}
+.nudge span{flex:1} .nudge button{flex:none;padding:6px 10px;font-size:13px}
+.nudge #nudge-close{background:none;color:var(--mut)}
