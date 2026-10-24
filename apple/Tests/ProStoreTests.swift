@@ -68,6 +68,7 @@ final class ProStoreTests: XCTestCase {
         XCTAssertEqual(store.product?.id, ProStore.yearlyProductID)
         XCTAssertEqual(store.product?.subscription?.subscriptionPeriod.unit, .year)
         XCTAssertFalse(store.product?.displayPrice.isEmpty ?? true)
+        XCTAssertEqual(store.product?.price, Decimal(14), "Pro is GBP 14 per year")
     }
 
     func testPurchaseUnlocksPro() async {

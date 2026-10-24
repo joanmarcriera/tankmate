@@ -4,8 +4,8 @@ Status: built and tested locally (multi-tank, charts, per-tank reminders, paywal
 subscription group, product and price is a gate for Marc (see end).
 
 ## Offer
-One auto-renewing subscription, **Tankmate Pro (yearly)**, target GBP 12-18 per year
-(local test config uses 14.99; the real price is Marc's decision). Product id
+One auto-renewing subscription, **Tankmate Pro (yearly)**, price GBP 14 per year (decision on record, Vikunja #1962; the local
+test config uses 14.00). Product id
 `uk.co.riera.tankmate.pro.yearly`, subscription group `Tankmate Pro`. No monthly tier at
 launch (fewer SKUs, less review surface). Optional 1-month free trial introductory offer.
 
@@ -51,7 +51,7 @@ the moat and the acquisition hook. Pro sells convenience for people with more th
 - Create the subscription group, the product `uk.co.riera.tankmate.pro.yearly` and its
   price in App Store Connect; it must be submitted alongside a build.
 - Paid Apps Agreement + tax/banking in App Store Connect (required before any IAP works).
-- Final price and whether to offer a free trial.
+- Set the price to GBP 14.00 (UK tier) in App Store Connect; trial yes/no still open.
 
 ## Build notes (2026-10-17)
 - Default tank keeps the legacy `tankmate.tests.v1` key (no data moved); extra tanks use
