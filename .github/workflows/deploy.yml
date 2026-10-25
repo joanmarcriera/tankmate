@@ -26,8 +26,10 @@ jobs:
           chmod 600 ~/.ssh/known_hosts
           # 'apple/' is the native iOS app (Xcode project + Swift sources); it is
           # not web content and must never be published to the site root. The
-          # rsync uses --delete, so an unexcluded apple/ would appear live.
+          # rsync uses --delete, so an unexcluded apple/ would appear live. Same for
+          # drafts/ (unreviewed copy), docs/, .vikunja/ and .claude/ (tooling).
           rsync -az --delete \
             --exclude '.git' --exclude '.github' --exclude 'apple' --exclude '*.md' \
+            --exclude 'drafts' --exclude 'docs' --exclude '.vikunja' --exclude '.claude' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/
