@@ -306,7 +306,9 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
     };
   }
   // The seed history is not the user's own: count only tests saved through the form.
-  window.nudgeAfterSave = () => { lsSet(N.FLAG_SAVED); render(); };
+  window.tankmateNudgeSaved = () => { lsSet(N.FLAG_SAVED); render(); };
   render();
 })();
-function nudgeAfterSave(){ if (window.nudgeAfterSave) window.nudgeAfterSave(); }
+/* Distinct hook name: this global function declaration is itself window.nudgeAfterSave, so reusing
+   that name recursed forever when nudge.js is absent (iOS bundle, task 5024). */
+function nudgeAfterSave(){ if (typeof window.tankmateNudgeSaved === 'function') window.tankmateNudgeSaved(); }
