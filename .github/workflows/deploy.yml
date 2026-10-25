@@ -41,6 +41,6 @@ jobs:
           # drafts/ (unreviewed copy), docs/, .vikunja/ and .claude/ (tooling).
           rsync -az --delete \
             --exclude '.git' --exclude '.github' --exclude 'apple' --exclude '*.md' \
-            --exclude 'drafts' --exclude 'docs' --exclude '.vikunja' --exclude '.claude' \
+            --exclude '/drafts/' --exclude '/docs/' --exclude '/.vikunja' --exclude '/.claude/' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/
