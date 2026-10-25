@@ -65,5 +65,7 @@ canvas{width:100%} .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;c
 .nudge{position:fixed;left:0;right:0;bottom:calc(58px + env(safe-area-inset-bottom));z-index:5;display:flex;align-items:center;gap:8px;
   max-width:680px;margin:0 auto;padding:10px 12px;background:var(--panel2);border:1px solid var(--acc);border-radius:10px;font-size:13px}
 .nudge[hidden]{display:none}
-.nudge span{flex:1} .nudge button{flex:none;padding:6px 10px;font-size:13px}
+/* Bar (~45px; ~75px when the text wraps on narrow screens) sits above the 58px tab bar: keep content scrollable past it. */
+body.has-nudge{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
+.nudge span{flex:1} .nudge button{flex:none;width:auto;padding:6px 10px;font-size:13px}
 .nudge #nudge-close{background:none;color:var(--mut)}

@@ -288,6 +288,7 @@ if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catc
     const bar = document.getElementById('installnudge'); if (!bar) return;
     const mode = N.nudgeMode(state());
     bar.hidden = !mode;
+    document.body.classList.toggle('has-nudge', !!mode); // extra bottom padding so the bar never covers content
     if (!mode) return;
     document.getElementById('nudge-text').textContent = mode === 'ios'
       ? 'Keep Tankmate on your home screen: tap Share, then Add to Home Screen.'
