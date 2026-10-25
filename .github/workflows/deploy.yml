@@ -7,7 +7,18 @@ concurrency:
   group: deploy-${{ github.ref }}
   cancel-in-progress: true
 jobs:
+  # Gate: production rsync only runs if the node tests pass.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run web tests
+        run: node --test apple/WebTests/*.test.js
   deploy:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
