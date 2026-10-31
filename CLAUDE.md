@@ -94,7 +94,7 @@ Files deployed as-is (no build). Served by nginx on Hetzner VPS, behind Traefik 
 
 ## Gotchas & notes
 
-1. **Service worker cache key:** Line 2 of `sw.js` is `VERSION = 'tankmate-v1'`. Bump it to invalidate caches (e.g. on CSS/JS updates).
+1. **Service worker cache key:** Line 2 of `sw.js` is `VERSION = 'tankmate-v2'`. Bump it to invalidate caches (e.g. on CSS/JS updates).
 
 2. **localStorage scope:** Data is per-origin. If deployed to a new URL, users won't see their old tests. Consider export/import for multi-tank feature later.
 
