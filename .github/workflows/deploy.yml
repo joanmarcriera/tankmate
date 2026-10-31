@@ -27,7 +27,23 @@ jobs:
           # 'apple/' is the native iOS app (Xcode project + Swift sources); it is
           # not web content and must never be published to the site root. The
           # rsync uses --delete, so an unexcluded apple/ would appear live.
+          #
+          # An --exclude also PROTECTS matching files on the server from
+          # --delete, so excluding a path that an earlier deploy already
+          # published freezes it live forever. The 'R' (risk) rules below are
+          # receiver-side only and win because they come first: they drop that
+          # protection for exactly the files earlier deploys published, so
+          # --delete removes them. They never change what gets sent.
+          #   README.md, CLAUDE.md, HANDOFF-*.md: published before 116cfe9
+          #     added --exclude '*.md'.
+          #   .vikunja: published by every deploy since d81fc7d; it is internal
+          #     task-tracker metadata, not web content, so it is excluded now.
+          # '/tests' holds the node --test suite; it is never web content.
           rsync -az --delete \
+            --filter 'R /README.md' --filter 'R /CLAUDE.md' \
+            --filter 'R /HANDOFF-2026-09-05.md' --filter 'R /HANDOFF-2026-09-06.md' \
+            --filter 'R /.vikunja' \
             --exclude '.git' --exclude '.github' --exclude 'apple' --exclude '*.md' \
+            --exclude '.vikunja' --exclude '/tests' \
             -e "ssh -i ~/.ssh/deploy -o StrictHostKeyChecking=yes" \
             ./ deploy@joanmarcriera.es:/opt/stacks/core/tankmate/
