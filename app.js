@@ -19,28 +19,36 @@ let tests = load();
 if (!tests) { tests = SEED.slice(); save(tests); }
 
 /* ---------- VERDICT ENGINE (the moat) ---------- */
+// One gate for every rule: null, undefined, empty/blank strings, non-numeric
+// strings, non-finite and negative values give no verdict; numeric strings
+// are parsed, so "0" reads as 0 (good), not as a toxic reading.
+const reading = (v)=>{
+  if(typeof v==='string'){ v=v.trim(); if(v==='') return null; v=Number(v); }
+  if(typeof v!=='number'||!Number.isFinite(v)||v<0) return null;
+  return v;
+};
 // returns {level:'good|warn|bad', tag, meaning, action}
 const RULES = {
-  nh3(v){ if(v==null||isNaN(v)) return null;
+  nh3(v){ v=reading(v); if(v==null) return null;
     if(v===0) return {level:'good',tag:'0 — perfect',meaning:'Filter bacteria are processing all fish waste. Zero is the only acceptable number.'};
     return {level:'bad',tag:v+' ppm — toxic',meaning:'Ammonia is toxic at any visible level. Colony A is overwhelmed: overfeeding, a death, or filter damage.',action:'25–30% water change TODAY. Re-test daily until 0. Find the cause.'}; },
-  no2(v){ if(v==null||isNaN(v)) return null;
+  no2(v){ v=reading(v); if(v==null) return null;
     if(v===0) return {level:'good',tag:'0 — perfect',meaning:'Second-stage bacteria are working. Zero is the only acceptable number.'};
     return {level:'bad',tag:v+' ppm — toxic',meaning:'Colony B is behind colony A — classic after adding fish or a disturbance.',action:'Water changes until it reads 0. Re-test daily.'}; },
-  no3(v){ if(v==null||isNaN(v)) return null;
+  no3(v){ v=reading(v); if(v==null) return null;
     if(v<=20) return {level:'good',tag:v+' ppm — green zone',meaning:'The exhaust pipe of the cycle. Low and healthy. Plants + weekly changes manage it.'};
     if(v<=40) return {level:'warn',tag:v+' ppm — climbing',meaning:'Still tolerable but trending up. Don\'t let it pass ~40.',action:'Bring forward your next water change; check feeding amount.'};
     return {level:'bad',tag:v+' ppm — act',meaning:'Above the comfortable range for sensitive fish.',action:'Water change now; reduce feeding; add/maintain plants.'}; },
-  kh(v){ if(v==null||isNaN(v)) return null;
+  kh(v){ v=reading(v); if(v==null) return null;
     if(v>=7) return {level:'good',tag:v+' dKH — healthy buffer',meaning:'Comfortable buffer. Nitrification consumes KH all day; water changes are your supply line.'};
     if(v>=5) return {level:'warn',tag:v+' dKH — thinning',meaning:'Buffer getting thin. Test weekly now, not monthly.',action:'Plan a water change in the next few days to top KH up.'};
     return {level:'bad',tag:v+' dKH — danger',meaning:'Thin buffer → pH can crash suddenly (not gradually), stalling bacteria and stressing fish.',action:'Water change SAME DAY. Re-test in 3 days.'}; },
-  ph(v){ if(v==null||isNaN(v)) return null;
+  ph(v){ v=reading(v); if(v==null) return null;
     return {level:'good',tag:v+' — informational',meaning:'Absolute pH matters less than stability. A steady 7.0–7.8 with healthy KH is fine; don\'t chase a number.'}; },
-  temp(v){ if(v==null||isNaN(v)) return null;
+  temp(v){ v=reading(v); if(v==null) return null;
     if(v>=23&&v<=27) return {level:'good',tag:v+'°C — in range',meaning:'Good tropical community range.'};
     return {level:'warn',tag:v+'°C — check',meaning:'Outside the usual 23–27°C tropical range. Check the heater/room temp.',action:'Verify heater function; sudden swings stress fish.'}; },
-  gh(v){ if(v==null||isNaN(v)) return null;
+  gh(v){ v=reading(v); if(v==null) return null;
     return {level:'good',tag:v+' dGH — informational',meaning:'General hardness. Hard tap suits guppies and is fine for tank-bred tetras. Stability beats ideal numbers.'}; },
 };
 const LABEL = {nh3:'NH₃ ammonia',no2:'NO₂ nitrite',no3:'NO₃ nitrate',kh:'KH buffer',ph:'pH',gh:'GH',temp:'Temperature'};
@@ -96,7 +104,7 @@ function renderTrends(){
     </div></div>`;
   } else html='<div class="empty">Log at least two tests to see trends.</div>';
   // KH watch
-  const k=[...tests].filter(t=>t.kh!=null).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  const k=[...tests].filter(t=>RULES.kh(t.kh)).sort((a,b)=>b.date.localeCompare(a.date))[0];
   if(k){ const r=RULES.kh(k.kh); html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
   el.innerHTML=html;
   drawChart();
