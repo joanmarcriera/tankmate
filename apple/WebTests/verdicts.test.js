@@ -26,6 +26,22 @@ test('KH boundaries: 4 bad, 5 warn, 7 good', () => {
   assert.equal(level('kh', 7), 'good');
 });
 
+test('KH matches the Playbook: bad <= 4, warn 4-7, good >= 7', () => {
+  assert.equal(level('kh', 4), 'bad');
+  assert.equal(level('kh', 4.1), 'warn');
+  assert.equal(level('kh', 6.9), 'warn');
+  assert.equal(level('kh', 7), 'good');
+});
+
+test('temp extremes are bad: < 20 or > 30 C', () => {
+  assert.equal(level('temp', 19.9), 'bad');
+  assert.equal(level('temp', 20), 'warn');
+  assert.equal(level('temp', 30), 'warn');
+  assert.equal(level('temp', 30.1), 'bad');
+  assert.ok(RULES.temp(19.9).action);
+  assert.ok(RULES.temp(30.1).action);
+});
+
 test('temp boundaries: 22 warn, 23 good, 27 good, 28 warn', () => {
   assert.equal(level('temp', 22), 'warn');
   assert.equal(level('temp', 23), 'good');

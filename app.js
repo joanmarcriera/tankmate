@@ -41,12 +41,13 @@ const RULES = {
     return {level:'bad',tag:v+' ppm — act',meaning:'Above the comfortable range for sensitive fish.',action:'Water change now; reduce feeding; add/maintain plants.'}; },
   kh(v){ v=reading(v); if(v==null) return null;
     if(v>=7) return {level:'good',tag:v+' dKH — healthy buffer',meaning:'Comfortable buffer. Nitrification consumes KH all day; water changes are your supply line.'};
-    if(v>=5) return {level:'warn',tag:v+' dKH — thinning',meaning:'Buffer getting thin. Test weekly now, not monthly.',action:'Plan a water change in the next few days to top KH up.'};
+    if(v>4) return {level:'warn',tag:v+' dKH — thinning',meaning:'Buffer getting thin. Test weekly now, not monthly.',action:'Plan a water change in the next few days to top KH up.'};
     return {level:'bad',tag:v+' dKH — danger',meaning:'Thin buffer → pH can crash suddenly (not gradually), stalling bacteria and stressing fish.',action:'Water change SAME DAY. Re-test in 3 days.'}; },
   ph(v){ v=reading(v); if(v==null) return null;
     return {level:'good',tag:v+' — informational',meaning:'Absolute pH matters less than stability. A steady 7.0–7.8 with healthy KH is fine; don\'t chase a number.'}; },
   temp(v){ v=reading(v); if(v==null) return null;
     if(v>=23&&v<=27) return {level:'good',tag:v+'°C — in range',meaning:'Good tropical community range.'};
+    if(v<20||v>30) return {level:'bad',tag:v+'°C — '+(v<20?'too cold':'too hot'),meaning:'Far outside the 23–27°C tropical range. Tropical fish are stressed and disease-prone at this temperature.',action:v<20?'Check the heater is plugged in and working now; warm the room. Change temperature gradually, no more than ~2°C per day.':'Cool the tank now: lid open, fan across the surface, lights off; check the heater is not stuck on. Increase aeration — hot water holds less oxygen.'};
     return {level:'warn',tag:v+'°C — check',meaning:'Outside the usual 23–27°C tropical range. Check the heater/room temp.',action:'Verify heater function; sudden swings stress fish.'}; },
   gh(v){ v=reading(v); if(v==null) return null;
     return {level:'good',tag:v+' dGH — informational',meaning:'General hardness. Hard tap suits guppies and is fine for tank-bred tetras. Stability beats ideal numbers.'}; },
