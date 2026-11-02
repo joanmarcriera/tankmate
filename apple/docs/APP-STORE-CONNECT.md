@@ -61,7 +61,8 @@ with ITMS-90889).
    field there is already inside Apple's length limits.
 3. **Privacy** → Data Collection → **"No, we do not collect data from this app."**
    This matches `apple/Resources/PrivacyInfo.xcprivacy`, and it is true by construction:
-   the app makes no network requests.
+   the app sends no data to us or any third party; the only network traffic is StoreKit
+   talking to Apple for the optional Pro subscription.
 4. **Privacy Policy URL** → `https://tankmate.joanmarcriera.es/privacy/`
    **Support URL** → `https://tankmate.joanmarcriera.es/support/`
    Both pages are drafted in this branch (`privacy/`, `support/`) but are **not live until
