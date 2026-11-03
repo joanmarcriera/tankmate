@@ -18,8 +18,8 @@ describe('NH3 ammonia: only 0 is good, anything visible is bad', () => {
     assert.match(r.action, /water change TODAY/);
   });
   test('good verdict carries no action', () => assert.equal(RULES.nh3(0).action, undefined));
+  // #7: reading() rejects negatives, so an impossible -1 ppm is no longer "toxic".
   test('negative ammonia is rejected rather than called toxic',
-    { todo: 'no input validation: -1 ppm is reported as "-1 ppm — toxic"' },
     () => assert.equal(level('nh3', -1), null));
 });
 
@@ -41,12 +41,12 @@ describe('NO3 nitrate: good <=20, warn <=40, bad above', () => {
   test('40 ppm ("don\'t let it pass ~40") is still warn', () => assert.equal(level('no3', 40), 'warn'));
   test('40.1 ppm is bad', () => assert.equal(level('no3', 40.1), 'bad'));
   test('160 ppm is bad', () => assert.equal(level('no3', 160), 'bad'));
+  // #7: reading() rejects negatives, so -5 ppm is no longer "green zone".
   test('negative nitrate is rejected rather than called green',
-    { todo: 'no input validation: -5 ppm is reported as "-5 ppm — green zone"' },
     () => assert.equal(level('no3', -5), null));
 });
 
-describe('KH buffer: good >=7, warn 5-6, bad <=4', () => {
+describe('KH buffer: good >=7, warn >4 and <7, bad <=4', () => {
   test('7 dKH is good', () => assert.equal(level('kh', 7), 'good'));
   test('17 dKH (hard tap) is good', () => assert.equal(level('kh', 17), 'good'));
   test('6.9 dKH is warn', () => assert.equal(level('kh', 6.9), 'warn'));
@@ -59,21 +59,36 @@ describe('KH buffer: good >=7, warn 5-6, bad <=4', () => {
   });
   test('3 dKH (seed reading) is bad', () => assert.equal(level('kh', 3), 'bad'));
   test('0 dKH is bad', () => assert.equal(level('kh', 0), 'bad'));
-  test('4.5 dKH follows the playbook threshold "KH <= 4" (would be warn)',
-    { todo: 'code uses v>=5 for warn, so 4.1-4.9 dKH is "danger / water change SAME DAY" though the playbook card says KH <= 4' },
-    () => assert.equal(level('kh', 4.5), 'warn'));
+  // #7: bad threshold is now KH <= 4 (matching the Playbook card), so 4.1-4.9 dKH is warn.
+  test('4.5 dKH follows the playbook threshold "KH <= 4" (warn)', () => assert.equal(level('kh', 4.5), 'warn'));
+  test('4.01 dKH is warn (just above the playbook threshold)', () => assert.equal(level('kh', 4.01), 'warn'));
 });
 
-describe('Temperature: good 23-27 °C inclusive, warn outside', () => {
+describe('Temperature: good 23-27 °C, warn 20-30 °C, bad below 20 or above 30', () => {
   test('23 °C is good', () => assert.equal(level('temp', 23), 'good'));
   test('27 °C is good', () => assert.equal(level('temp', 27), 'good'));
   test('25 °C is good', () => assert.equal(level('temp', 25), 'good'));
   test('22.9 °C is warn', () => assert.equal(level('temp', 22.9), 'warn'));
   test('27.1 °C is warn', () => assert.equal(level('temp', 27.1), 'warn'));
-  test('0 °C is warn (never bad)', () => assert.equal(level('temp', 0), 'warn'));
-  test('40 °C is warn with heater action', () => {
+  // #7: far outside the tropical range (<20 or >30 °C) is now bad, not just warn.
+  test('20 °C and 30 °C are still warn (edges of the bad band)', () => {
+    assert.equal(level('temp', 20), 'warn');
+    assert.equal(level('temp', 30), 'warn');
+  });
+  test('19.9 °C and 30.1 °C are bad', () => {
+    assert.equal(level('temp', 19.9), 'bad');
+    assert.equal(level('temp', 30.1), 'bad');
+  });
+  test('0 °C is bad (too cold) with heater action', () => {
+    const r = RULES.temp(0);
+    assert.equal(r.level, 'bad');
+    assert.match(r.tag, /too cold/);
+    assert.match(r.action, /heater/);
+  });
+  test('40 °C is bad (too hot) with heater action', () => {
     const r = RULES.temp(40);
-    assert.equal(r.level, 'warn');
+    assert.equal(r.level, 'bad');
+    assert.match(r.tag, /too hot/);
     assert.match(r.action, /heater/);
   });
 });
@@ -94,16 +109,20 @@ describe('missing and non-numeric readings are skipped', () => {
     });
   }
   test('non-numeric string "abc" gives no verdict', () => assert.equal(RULES.nh3('abc'), null));
-  test('empty string gives no verdict',
-    { todo: 'isNaN("") is false, so "" reaches the rule and reads " ppm — toxic"; the form maps "" to null so only stored/imported data can hit this' },
-    () => assert.equal(RULES.nh3(''), null));
-  test('string "0" ammonia is good',
-    { todo: 'nh3/no2 use v===0, so a string "0" (e.g. from imported or hand-edited data) reads "0 ppm — toxic"' },
-    () => assert.equal(level('nh3', '0'), 'good'));
+  // #7: reading() treats blank strings as missing instead of passing "" to the rule.
+  test('empty string gives no verdict', () => {
+    for (const k of Object.keys(RULES)) assert.equal(RULES[k](''), null, k);
+  });
+  // #7: reading() parses numeric strings, so "0" from imported/hand-edited data is good, not toxic.
+  test('string "0" ammonia is good', () => assert.equal(level('nh3', '0'), 'good'));
   test('verdict tags never contain NaN for any numeric input', () => {
-    for (const k of Object.keys(RULES)) for (const v of [0, 1, 4.5, 20, 1e6, -1]) {
+    for (const k of Object.keys(RULES)) for (const v of [0, 1, 4.5, 20, 1e6]) {
       assert.doesNotMatch(RULES[k](v).tag, /NaN|undefined/, `${k}(${v})`);
     }
+  });
+  // #7: negative readings are rejected (null) for every parameter, so there is no tag at all.
+  test('negative readings give no verdict for any parameter', () => {
+    for (const k of Object.keys(RULES)) assert.equal(RULES[k](-1), null, k);
   });
 });
 
