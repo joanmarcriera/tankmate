@@ -96,6 +96,11 @@ final class ChartDataTests: XCTestCase {
         XCTAssertTrue(lines.contains("2026-06-11,0.0,0.0,10.0,7.0,7.4,,25.0,\"say \"\"hi\"\", ok\""), csv)
     }
 
+    func testCSVNeutralisesFormulaLeadingNotes() {
+        let t = [TestRecord(date: "2026-06-11", nh3: 0, no2: nil, no3: nil, kh: nil, ph: nil, gh: nil, temp: nil, note: "=HYPERLINK(1)")]
+        XCTAssertTrue(ChartData.csv(t).contains(",\"'=HYPERLINK(1)\""))
+    }
+
     func testTankStateDecodesWhatTheWebAppSends() throws {
         let json = #"{"active":{"id":"default","name":"Flex"},"tanks":[{"id":"default","name":"Flex"}],"tests":[{"date":"2026-06-11","nh3":0,"no2":null,"no3":10,"kh":7,"ph":7.4,"gh":null,"temp":25,"note":"x"}]}"#
         let s = try JSONDecoder().decode(TankState.self, from: Data(json.utf8))

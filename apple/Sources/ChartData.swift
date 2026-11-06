@@ -123,7 +123,12 @@ enum ChartData {
     /// CSV with a header row; empty cells for missing readings; notes quoted per RFC 4180.
     static func csv(_ tests: [TestRecord]) -> String {
         func cell(_ v: Double?) -> String { v.map { String($0) } ?? "" }
-        func quote(_ s: String) -> String { "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
+        // Spreadsheet formula injection: a cell starting with = + - @ tab or CR is prefixed with ' so it stays text.
+        func quote(_ s: String) -> String {
+            let risky = s.first.map { "=+-@\t\r".contains($0) } ?? false
+            let safe = risky ? "'" + s : s
+            return "\"" + safe.replacingOccurrences(of: "\"", with: "\"\"") + "\""
+        }
         var lines = ["date,nh3,no2,no3,kh,ph,gh,temp,note"]
         for t in tests.sorted(by: { $0.date < $1.date }) {
             lines.append([t.date, cell(t.nh3), cell(t.no2), cell(t.no3), cell(t.kh), cell(t.ph), cell(t.gh), cell(t.temp), quote(t.note ?? "")].joined(separator: ","))
