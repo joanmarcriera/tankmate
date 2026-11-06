@@ -48,8 +48,10 @@ final class ReminderScheduler: ObservableObject {
     /// Pro: per-tank schedules (persisted as JSON). Only applied while `isPro`.
     @Published private(set) var schedules: [ReminderSchedule] = []
     /// Set by the app from ProStore.isPro. Losing Pro cancels the extra schedules
-    /// (they are kept, so they come back if the subscription is renewed).
-    @Published var isPro = false { didSet { if oldValue != isPro { Task { await applySchedules() } } } }
+    /// (they are kept, so they come back if the subscription is renewed). Applied on every
+    /// assignment, including an unchanged `false`: if Pro lapsed while the app was closed the
+    /// first entitlement check after launch is false→false and must still remove the stale requests.
+    @Published var isPro = false { didSet { Task { await applySchedules() } } }
     private static let schedulesKey = "reminders.schedules.v1"
 
     init(defaults: UserDefaults = .standard, center: NotificationCentering = UNUserNotificationCenter.current()) {

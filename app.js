@@ -4,12 +4,8 @@
 
 const TANK = 'tankmate.tank.v1';
 
-/* ---------- seed: Marc's real Fluval Flex 57 L, 2026-06-11 ---------- */
-const SEED = [
-  { date:'2025-12-20', nh3:0, no2:0.5, no3:15, kh:4, ph:7.2, temp:25, note:'after adding fish — NO2 spike' },
-  { date:'2026-05-30', nh3:0, no2:0.25, no3:20, kh:3, ph:7.1, temp:25, note:'instability; started water-change run' },
-  { date:'2026-06-11', nh3:0, no2:0, no3:10, kh:7, ph:7.4, temp:25, note:'healthy after 5–6 water changes' },
-];
+/* First run starts empty for every tank: the owner's sample readings are no longer
+   shipped as the user's history. */
 
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
@@ -23,7 +19,7 @@ const STORE_NOW = () => TankStore.testsKey(activeId);
 const load = () => { try { return JSON.parse(localStorage.getItem(STORE_NOW())) || null } catch { return null } };
 const save = (a) => localStorage.setItem(STORE_NOW(), JSON.stringify(a));
 let tests = load();
-if (!tests) { tests = activeId === TankStore.DEFAULT_ID ? SEED.slice() : []; save(tests); }
+if (!tests) { tests = []; save(tests); }
 
 /* ---------- VERDICT ENGINE (the moat) ---------- */
 // returns {level:'good|warn|bad', tag, meaning, action}
@@ -252,7 +248,7 @@ function resetEntryForm(){
 window.tankmateApplyNative=function(o){
   window.tankmateNativeShell=true; isPro=!!(o&&o.isPro);
   activeId=TankStore.effectiveActive(registry,isPro);
-  tests=load()||(activeId===TankStore.DEFAULT_ID?SEED.slice():[]); repaint();
+  tests=load()||[]; repaint();
 };
 // Native has already checked the entitlement before calling this.
 window.tankmateAddTank=function(name){
