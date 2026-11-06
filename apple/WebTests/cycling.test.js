@@ -112,3 +112,12 @@ test('only "ready" is ever safe: sweep of every non-ready fixture', () => {
   ];
   for (const f of fixtures) assert.equal(C.cyclingState(f).safeToAddFish, false);
 });
+
+test('invalid evidence never declares ready (negative hours, infinite dose)', () => {
+  for (const bad of [{ hoursSinceDose: -1 }, { dose: Infinity }, { hoursSinceDose: Infinity }]) {
+    const mk = (d) => Object.assign(pass(d), bad);
+    const r = C.cyclingState([mk('2026-10-01'), mk('2026-10-02')]);
+    assert.equal(r.safeToAddFish, false, JSON.stringify(bad));
+    assert.equal(r.passes, 0, JSON.stringify(bad));
+  }
+});

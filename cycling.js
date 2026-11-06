@@ -17,14 +17,15 @@
   const PASSES_NEEDED = 2;     // repeat the 24 h test twice on different dates (spec T2)
   const STALE_DAYS = 3;        // latest test older than this: advice may be out of date (spec T5)
 
-  const num = (v) => (v == null || v === '' || Number.isNaN(Number(v))) ? null : Number(v);
+  // Finite numbers only: Infinity/NaN/blank are "missing" so they can never count towards a pass.
+  const num = (v) => (v == null || v === '' || !Number.isFinite(Number(v))) ? null : Number(v);
   const dayMs = 86400000;
   const sorted = (tests) => [...(tests || [])].filter(t => t && t.date).sort((a, b) => a.date.localeCompare(b.date));
 
   /** True when this record is a fishless "full dose cleared" test (spec T1). */
   function isPass(t) {
     const dose = num(t.dose), h = num(t.hoursSinceDose);
-    return dose != null && dose >= DOSE_PPM && h != null && h <= WINDOW_H &&
+    return dose != null && dose >= DOSE_PPM && h != null && h >= 0 && h <= WINDOW_H &&
       num(t.nh3) === 0 && num(t.no2) === 0 && (num(t.no3) || 0) > 0;
   }
 

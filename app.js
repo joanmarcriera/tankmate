@@ -241,7 +241,12 @@ function renderTankName(){
 }
 function tankmateSwitch(id){
   registry=TankStore.setActive(localStorage,id); activeId=TankStore.effectiveActive(registry,isPro);
-  tests=load()||[]; repaint();
+  tests=load()||[]; resetEntryForm(); repaint();
+}
+// Readings typed for one tank must never be saved into another: clear the form on every tank change.
+function resetEntryForm(){
+  const f=document.getElementById('testform'); if(!f) return;
+  f.reset(); document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
 }
 // Called by the native shell. Pro state is pushed in; it is never read back from storage.
 window.tankmateApplyNative=function(o){
@@ -253,7 +258,7 @@ window.tankmateApplyNative=function(o){
 window.tankmateAddTank=function(name){
   try{ TankStore.addTank(localStorage,name); }catch(e){ return false; }
   registry=TankStore.ensureRegistry(localStorage); activeId=TankStore.effectiveActive(registry,isPro);
-  tests=load()||[]; repaint(); return true;
+  tests=load()||[]; resetEntryForm(); repaint(); return true;
 };
 // Snapshot for the native charts / reminders sheets.
 window.tankmateState=function(){
