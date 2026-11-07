@@ -66,3 +66,22 @@ test('shortDate / chartLabelIdx', () => {
   assert.deepEqual(Array.from(vm.runInContext('chartLabelIdx(3)', c)), [0, 1, 2]);
   assert.deepEqual(Array.from(vm.runInContext('chartLabelIdx(10)', c)), [0, 3, 6, 9]);
 });
+
+test('renderHandover escapes the last test date', () => {
+  const els = { 'h-days': { value: '7' }, 'h-friend': { value: '' }, handover: { innerHTML: '' } };
+  const c = vm.createContext({ tests: [{ date: EVIL }], document: { getElementById: id => els[id] }, esc: null, worst: () => 'good' });
+  vm.runInContext(line('const esc') + '\n' + block('function renderHandover'), c);
+  vm.runInContext('renderHandover()', c);
+  assert.ok(!els.handover.innerHTML.includes('<img'), els.handover.innerHTML);
+});
+
+test('load(): drops records without a string date, nulls non-numeric readings, backs up the raw string', () => {
+  const store = new Map([['k', JSON.stringify([{ date: '2026-01-01', kh: 'abc', no3: 10 }, { date: 5 }, null])]]);
+  const c = vm.createContext({ storage: { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, v) }, STORE_NOW: () => 'k', Date });
+  vm.runInContext(line('const NUMERIC') + '\n' + line('const cleanTest') .replace(/$/, '') + '\n' + src.slice(src.indexOf('  ? Object.fromEntries'), src.indexOf('\n', src.indexOf('  ? Object.fromEntries'))) + '\n' + block('const load'), c);
+  const out = vm.runInContext('load()', c);
+  assert.equal(out.length, 1);
+  assert.equal(out[0].kh, null);
+  assert.equal(out[0].no3, 10);
+  assert.ok([...store.keys()].some(k => k.startsWith('k.corrupt-')), 'raw string backed up');
+});

@@ -17,7 +17,18 @@ const { store: storage, persistent: storagePersistent } = TankStore.safeStorage(
 let registry = TankStore.ensureRegistry(storage, document.getElementById('tankname').textContent.trim());
 let activeId = TankStore.effectiveActive(registry, isPro);
 const STORE_NOW = () => TankStore.testsKey(activeId);
-const load = () => { try { const v = JSON.parse(storage.getItem(STORE_NOW())); return Array.isArray(v) ? v.filter(t => t && typeof t === 'object' && typeof t.date === 'string') : null } catch { return null } };
+const NUMERIC = ['nh3','no2','no3','kh','ph','gh','temp'];
+/* A stored record is usable if it has a string date; non-numeric readings are nulled so no
+   renderer can throw on them. Anything dropped is first backed up under a .corrupt- key. */
+const cleanTest = t => t && typeof t === 'object' && typeof t.date === 'string'
+  ? Object.fromEntries(Object.entries(t).map(([k, v]) => [k, NUMERIC.includes(k) && !(typeof v === 'number' && isFinite(v)) ? null : v])) : null;
+const load = () => { try {
+  const raw = storage.getItem(STORE_NOW()), v = JSON.parse(raw);
+  if (!Array.isArray(v)) return null;
+  const ok = v.map(cleanTest).filter(Boolean);
+  if (ok.length !== v.length) try { storage.setItem(STORE_NOW() + '.corrupt-' + Date.now(), raw) } catch {}
+  return ok;
+} catch { return null } };
 /* Local calendar date (toISOString is UTC and gives the wrong day around midnight). */
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 /* A failed write (quota, storage revoked mid-session) must not break the UI: the session
@@ -112,7 +123,8 @@ function renderTrends(){
   } else html='<div class="empty">Log at least two tests to see trends.</div>';
   // KH watch
   const k=[...tests].filter(t=>t.kh!=null).sort((a,b)=>b.date.localeCompare(a.date))[0];
-  if(k){ const r=RULES.kh(k.kh); html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
+  const r=k&&RULES.kh(k.kh);
+  if(k&&r){ html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
   el.innerHTML=html;
   drawChart();
 }
@@ -127,7 +139,7 @@ function drawChart(){
   const ctx=c.getContext('2d'); const W=c.width=c.clientWidth*devicePixelRatio, H=c.height=180*devicePixelRatio;
   ctx.clearRect(0,0,W,H); ctx.scale(1,1);
   const s=[...tests].sort((a,b)=>a.date.localeCompare(b.date));
-  if(s.length<2){ return; }
+  if(s.length<2){ c.setAttribute('aria-label','No chart yet: log at least two tests'); return; }
   const series={no3:'#22d3ee', kh:'#fbbf24'};
   const pad=24*devicePixelRatio;
   const xs=s.map((t,i)=> pad + i*(W-2*pad)/(s.length-1));
@@ -223,10 +235,12 @@ document.getElementById('testform').addEventListener('submit',e=>{
     nh3:g('f-nh3'),no2:g('f-no2'),no3:g('f-no3'),kh:g('f-kh'),ph:g('f-ph'),gh:g('f-gh'),temp:g('f-temp'),
     note:document.getElementById('f-note').value.trim()};
   tests = load() || tests;   // another window may have saved since startup: merge, don't clobber
-  tests.push(t); save(tests);
+  tests.push(t);
+  const saved = save(tests);
   nudgeAfterSave();
   renderVerdicts(t, document.getElementById('verdicts'));
   renderHistory(); renderTrends();
+  if(!saved) document.getElementById('verdicts').insertAdjacentHTML('afterbegin','<div class="empty" role="alert">Could not save this reading (browser storage is full or blocked). It is shown here but will be lost on reload.</div>');
   document.getElementById('verdicts').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
   e.target.reset(); document.getElementById('f-date').value=today();
 });

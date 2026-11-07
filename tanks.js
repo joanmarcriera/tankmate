@@ -36,7 +36,7 @@
       reg.tanks.unshift({ id: DEFAULT_ID, name: legacyName || DEFAULT_NAME });
     }
     if (!reg.tanks.some(t => t.id === reg.active)) reg.active = DEFAULT_ID;
-    storage.setItem(REGISTRY, JSON.stringify(reg));
+    try { storage.setItem(REGISTRY, JSON.stringify(reg)); } catch { /* quota: keep the in-memory registry */ }
     return reg;
   }
 
@@ -62,7 +62,7 @@
 
   function setActive(storage, id) {
     const reg = ensureRegistry(storage);
-    if (reg.tanks.some(t => t.id === id)) { reg.active = id; storage.setItem(REGISTRY, JSON.stringify(reg)); }
+    if (reg.tanks.some(t => t.id === id)) { reg.active = id; try { storage.setItem(REGISTRY, JSON.stringify(reg)); } catch { /* quota: switch for this session only */ } }
     return reg;
   }
 
@@ -81,7 +81,13 @@
       const probe = 'tankmate.probe';
       s.setItem(probe, '1'); s.removeItem(probe);
       return { store: s, persistent: true };
-    } catch { /* fall through to memory */ }
+    } catch {
+      // Writes fail but reads work: a full quota on an existing install must not look like erased data.
+      try {
+        const s = root.localStorage;
+        if (s.getItem(REGISTRY) !== null || s.getItem(LEGACY_TESTS) !== null) return { store: s, persistent: true };
+      } catch { /* blocked outright */ }
+    }
     const m = new Map();
     return {
       persistent: false,

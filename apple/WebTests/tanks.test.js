@@ -106,3 +106,11 @@ test('safeStorage: setItem that throws (quota / private mode) also falls back', 
   const root = { localStorage: { getItem: () => null, setItem() { throw new Error('QuotaExceeded'); }, removeItem() {} } };
   assert.equal(T.safeStorage(root).persistent, false);
 });
+
+test('safeStorage: full quota on an existing install keeps the readable store (data must not look erased)', () => {
+  const real = { getItem: k => k === 'tankmate.tests.v1' ? '[{"date":"2026-01-01"}]' : null, setItem() { throw new Error('QuotaExceeded'); }, removeItem() {} };
+  const r = T.safeStorage({ localStorage: real });
+  assert.equal(r.store, real);
+  assert.doesNotThrow(() => T.ensureRegistry(real, 'X'), 'registry write failure must not crash startup');
+  assert.doesNotThrow(() => T.setActive(real, 'default'));
+});
