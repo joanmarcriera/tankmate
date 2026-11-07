@@ -9,6 +9,29 @@ import XCTest
 import UserNotifications
 @testable import Tankmate
 
+final class JSLiteralTests: XCTestCase {
+    func testPlainTextIsQuoted() {
+        XCTAssertEqual(JSLiteral.quoted("Fluval 57 L"), "'Fluval 57 L'")
+    }
+
+    func testQuoteAndBackslashAreEscaped() {
+        XCTAssertEqual(JSLiteral.quoted("Marc's \\ tank"), "'Marc\\'s \\\\ tank'")
+    }
+
+    func testLineTerminatorsCannotEndTheLiteral() {
+        // Raw \n, \r, U+2028 and U+2029 all terminate a JS string literal.
+        XCTAssertEqual(JSLiteral.quoted("a\nb\rc\u{2028}d\u{2029}e"), "'a\\nb\\rc\\u2028d\\u2029e'")
+    }
+
+    func testOtherControlCharactersAreEscaped() {
+        XCTAssertEqual(JSLiteral.quoted("a\u{0}b\u{1F}"), "'a\\u0000b\\u001F'")
+    }
+
+    func testEmojiAndAccentsPassThrough() {
+        XCTAssertEqual(JSLiteral.quoted("Peixos 🐟 àèí"), "'Peixos 🐟 àèí'")
+    }
+}
+
 final class ProGateTests: XCTestCase {
     func testFreeTierKeepsOneTankAndNoExtras() {
         XCTAssertTrue(ProGate.canAddTank(currentCount: 0, isPro: false))

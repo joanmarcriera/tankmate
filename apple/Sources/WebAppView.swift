@@ -45,8 +45,31 @@ final class WebBridge: ObservableObject {
     }
 
     func addTank(name: String) {
-        let escaped = name.replacingOccurrences(of: "\\", with: "\\\\").replacingOccurrences(of: "'", with: "\\'")
-        webView?.evaluateJavaScript("window.tankmateAddTank && window.tankmateAddTank('\(escaped)')")
+        webView?.evaluateJavaScript("window.tankmateAddTank && window.tankmateAddTank(\(JSLiteral.quoted(name)))")
+    }
+}
+
+/// Turns arbitrary text into a single-quoted JavaScript string literal that is safe to
+/// splice into `evaluateJavaScript` source. Escaping only backslash and quote is not
+/// enough: a raw newline, carriage return, U+2028 or U+2029 terminates a JS string
+/// literal, so a tank name containing one would be a syntax error (or inject code).
+enum JSLiteral {
+    static func quoted(_ text: String) -> String {
+        var out = "'"
+        for scalar in text.unicodeScalars {
+            switch scalar {
+            case "\\": out += "\\\\"
+            case "'": out += "\\'"
+            case "\n": out += "\\n"
+            case "\r": out += "\\r"
+            case "\u{2028}": out += "\\u2028"
+            case "\u{2029}": out += "\\u2029"
+            default:
+                if scalar.value < 0x20 { out += String(format: "\\u%04X", scalar.value) }
+                else { out.unicodeScalars.append(scalar) }
+            }
+        }
+        return out + "'"
     }
 }
 
