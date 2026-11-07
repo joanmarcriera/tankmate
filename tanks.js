@@ -72,7 +72,28 @@
     return isPro ? reg.active : DEFAULT_ID;
   }
 
-  const api = { LEGACY_TESTS, REGISTRY, DEFAULT_ID, DEFAULT_NAME, testsKey, ensureRegistry, addTank, setActive, effectiveActive };
+  /** localStorage, or an in-memory stand-in when the browser blocks it, as {store, persistent} (Safari private
+      mode, "block all cookies", sandboxed iframes: even reading `window.localStorage` can
+      throw). The app then works for the session but keeps nothing; `persistent` says so. */
+  function safeStorage(root) {
+    try {
+      const s = root.localStorage;
+      const probe = 'tankmate.probe';
+      s.setItem(probe, '1'); s.removeItem(probe);
+      return { store: s, persistent: true };
+    } catch { /* fall through to memory */ }
+    const m = new Map();
+    return {
+      persistent: false,
+      store: {
+        getItem: (k) => m.has(k) ? m.get(k) : null,
+        setItem: (k, v) => { m.set(k, String(v)); },
+        removeItem: (k) => { m.delete(k); },
+      },
+    };
+  }
+
+  const api = { safeStorage, LEGACY_TESTS, REGISTRY, DEFAULT_ID, DEFAULT_NAME, testsKey, ensureRegistry, addTank, setActive, effectiveActive };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.TankStore = api;
 })(typeof window !== 'undefined' ? window : globalThis);

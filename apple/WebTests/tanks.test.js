@@ -82,3 +82,27 @@ test('addTank never overwrites the tests of an orphaned tank with the same slug'
   assert.notEqual(tank.id, 'reef');
   assert.equal(s.getItem(T.testsKey('reef')), orphan);
 });
+
+test('safeStorage: real storage is returned as persistent', () => {
+  const real = mem(); real.removeItem = k => real._m.delete(k);
+  const r = T.safeStorage({ localStorage: real });
+  assert.equal(r.persistent, true);
+  assert.equal(r.store, real);
+  assert.equal(real._m.has('tankmate.probe'), false, 'probe key is cleaned up');
+});
+
+test('safeStorage: a throwing localStorage getter (blocked storage) falls back to memory', () => {
+  const root = { get localStorage() { throw new Error('SecurityError'); } };
+  const r = T.safeStorage(root);
+  assert.equal(r.persistent, false);
+  r.store.setItem('a', 1);
+  assert.equal(r.store.getItem('a'), '1');
+  // The whole multi-tank layer works on top of it.
+  const reg = T.ensureRegistry(r.store, 'X');
+  assert.equal(reg.tanks[0].id, 'default');
+});
+
+test('safeStorage: setItem that throws (quota / private mode) also falls back', () => {
+  const root = { localStorage: { getItem: () => null, setItem() { throw new Error('QuotaExceeded'); }, removeItem() {} } };
+  assert.equal(T.safeStorage(root).persistent, false);
+});

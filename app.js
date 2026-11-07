@@ -13,18 +13,21 @@ const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','
    shell reports Pro via window.tankmateApplyNative({isPro}). On the PWA nothing sets it,
    so the PWA stays single-tank. ---------- */
 let isPro = false;
-let registry = TankStore.ensureRegistry(localStorage, document.getElementById('tankname').textContent.trim());
+const { store: storage, persistent: storagePersistent } = TankStore.safeStorage(window);
+let registry = TankStore.ensureRegistry(storage, document.getElementById('tankname').textContent.trim());
 let activeId = TankStore.effectiveActive(registry, isPro);
 const STORE_NOW = () => TankStore.testsKey(activeId);
-const load = () => { try { const v = JSON.parse(localStorage.getItem(STORE_NOW())); return Array.isArray(v) ? v : null } catch { return null } };
+const load = () => { try { const v = JSON.parse(storage.getItem(STORE_NOW())); return Array.isArray(v) ? v.filter(t => t && typeof t === 'object' && typeof t.date === 'string') : null } catch { return null } };
 /* Local calendar date (toISOString is UTC and gives the wrong day around midnight). */
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
-const save = (a) => localStorage.setItem(STORE_NOW(), JSON.stringify(a));
+/* A failed write (quota, storage revoked mid-session) must not break the UI: the session
+   keeps its in-memory `tests`, it just is not persisted. */
+const save = (a) => { try { storage.setItem(STORE_NOW(), JSON.stringify(a)); return true } catch { return false } };
 let tests = load();
 if (!tests) {
   // Never silently overwrite unreadable data: keep a copy of the raw string first.
-  const raw = localStorage.getItem(STORE_NOW());
-  if (raw !== null) localStorage.setItem(STORE_NOW() + '.corrupt-' + Date.now(), raw);
+  const raw = storage.getItem(STORE_NOW());
+  if (raw !== null) try { storage.setItem(STORE_NOW() + '.corrupt-' + Date.now(), raw) } catch {}
   tests = []; save(tests);
 }
 
@@ -66,7 +69,7 @@ const worst = (t)=>{ const v=verdictsFor(t); return v.length?v[0].level:'good'; 
 
 function renderVerdicts(t, el){
   const vs=verdictsFor(t);
-  el.innerHTML = `<h2>Verdict — ${t.date}</h2>` + vs.map(v=>`
+  el.innerHTML = `<h2>Verdict — ${esc(t.date)}</h2>` + vs.map(v=>`
     <div class="verdict ${v.level}">
       <div class="top"><span>${v.label}</span><span class="v">${v.tag}</span></div>
       <p>${v.meaning}</p>
@@ -75,14 +78,16 @@ function renderVerdicts(t, el){
 }
 
 /* ---------- HISTORY ---------- */
+const DOT_TEXT={good:'all readings fine',warn:'needs attention',bad:'action needed'};
 function renderHistory(){
   const el=document.getElementById('history');
   const sorted=[...tests].sort((a,b)=>b.date.localeCompare(a.date));
   el.innerHTML = sorted.map(t=>{
     const w=worst(t);
     const vals=['nh3','no2','no3','kh'].map(k=>t[k]!=null&&!isNaN(t[k])?`${k.toUpperCase()} ${t[k]}`:'').filter(Boolean).join(' · ');
-    return `<div class="h"><span class="d">${t.date}<span class="dot ${w}"></span></span><span class="vals">${vals}</span></div>`;
+    return `<div class="h"><span class="d">${esc(t.date)}<span class="dot ${w}" aria-hidden="true"></span><span class="sr-only"> — ${DOT_TEXT[w]}</span></span><span class="vals">${vals}</span></div>`;
   }).join('') || '<div class="empty">No tests yet.</div>';
+  if(!storagePersistent) el.insertAdjacentHTML('afterbegin','<div class="empty" role="status">Browser storage is blocked, so these readings will be lost when you close the page.</div>');
 }
 
 /* ---------- TRENDS (rate of change) ---------- */
@@ -112,6 +117,11 @@ function renderTrends(){
   drawChart();
 }
 
+/* "2026-06-11" -> "11 Jun"; anything unparseable is shown as-is (drawn on canvas, so no escaping needed). */
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function shortDate(d){ const m=/^\d{4}-(\d{2})-(\d{2})/.exec(d); return m&&MONTHS[+m[1]-1]?`${+m[2]} ${MONTHS[+m[1]-1]}`:String(d); }
+/* Indices of the points that get a date label: first, last and up to two evenly spaced between. */
+function chartLabelIdx(n){ const k=Math.min(n,4); return [...new Set(Array.from({length:k},(_,j)=>Math.round(j*(n-1)/(k-1||1))))]; }
 function drawChart(){
   const c=document.getElementById('chart'); if(!c) return;
   const ctx=c.getContext('2d'); const W=c.width=c.clientWidth*devicePixelRatio, H=c.height=180*devicePixelRatio;
@@ -132,6 +142,13 @@ function drawChart(){
     ctx.stroke();
     s.forEach((t,i)=>{ if(t[k]==null||isNaN(t[k]))return; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xs[i],y(t[k]),3*devicePixelRatio,0,7); ctx.fill(); });
   }
+  // X axis: first / last (and up to two between) test dates, so the lines have a time scale.
+  ctx.fillStyle='#9aa4b2'; ctx.font=`${10*devicePixelRatio}px system-ui,sans-serif`;
+  for(const i of chartLabelIdx(s.length)){
+    ctx.textAlign = i===0 ? 'left' : i===s.length-1 ? 'right' : 'center';
+    ctx.fillText(shortDate(s[i].date), xs[i], H-6*devicePixelRatio);
+  }
+  c.setAttribute('aria-label',`Chart of nitrate and KH, ${s.length} tests from ${shortDate(s[0].date)} to ${shortDate(s[s.length-1].date)}`);
   document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate</span><span><i style="background:#fbbf24"></i>KH buffer</span>';
 }
 
@@ -181,7 +198,7 @@ function renderHandover(){
   const el=document.getElementById('handover');
   el.innerHTML=`<div class="sheet" id="sheet">
     <h3>🐟 Tankmate handover — ${days} days${friend?` · for ${friend}`:''}</h3>
-    <p>Tank: <b>Fluval Flex 57 L</b>. Last water test ${last?last.date:'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
+    <p>Tank: <b>Fluval Flex 57 L</b>. Last water test ${last?esc(last.date):'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
     <div class="box"><b>Every day — morning only</b><ul>
       <li>One 3-finger pinch of the granules in the labelled pot. That's it for the day.</li>
       <li>Glance: are the fish swimming normally? Is the water clear? Is the light on its timer?</li>
@@ -244,7 +261,7 @@ function renderTankName(){
   };
 }
 function tankmateSwitch(id){
-  registry=TankStore.setActive(localStorage,id); activeId=TankStore.effectiveActive(registry,isPro);
+  registry=TankStore.setActive(storage,id); activeId=TankStore.effectiveActive(registry,isPro);
   tests=load()||[]; resetEntryForm(); repaint();
 }
 // Readings typed for one tank must never be saved into another: clear the form on every tank change.
@@ -260,8 +277,8 @@ window.tankmateApplyNative=function(o){
 };
 // Native has already checked the entitlement before calling this.
 window.tankmateAddTank=function(name){
-  try{ TankStore.addTank(localStorage,name); }catch(e){ return false; }
-  registry=TankStore.ensureRegistry(localStorage); activeId=TankStore.effectiveActive(registry,isPro);
+  try{ TankStore.addTank(storage,name); }catch(e){ return false; }
+  registry=TankStore.ensureRegistry(storage); activeId=TankStore.effectiveActive(registry,isPro);
   tests=load()||[]; resetEntryForm(); repaint(); return true;
 };
 // Snapshot for the native charts / reminders sheets.
