@@ -16,10 +16,17 @@ let isPro = false;
 let registry = TankStore.ensureRegistry(localStorage, document.getElementById('tankname').textContent.trim());
 let activeId = TankStore.effectiveActive(registry, isPro);
 const STORE_NOW = () => TankStore.testsKey(activeId);
-const load = () => { try { return JSON.parse(localStorage.getItem(STORE_NOW())) || null } catch { return null } };
+const load = () => { try { const v = JSON.parse(localStorage.getItem(STORE_NOW())); return Array.isArray(v) ? v : null } catch { return null } };
+/* Local calendar date (toISOString is UTC and gives the wrong day around midnight). */
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 const save = (a) => localStorage.setItem(STORE_NOW(), JSON.stringify(a));
 let tests = load();
-if (!tests) { tests = []; save(tests); }
+if (!tests) {
+  // Never silently overwrite unreadable data: keep a copy of the raw string first.
+  const raw = localStorage.getItem(STORE_NOW());
+  if (raw !== null) localStorage.setItem(STORE_NOW() + '.corrupt-' + Date.now(), raw);
+  tests = []; save(tests);
+}
 
 /* ---------- VERDICT ENGINE (the moat) ---------- */
 // returns {level:'good|warn|bad', tag, meaning, action}
@@ -191,24 +198,25 @@ function renderHandover(){
 }
 
 /* ---------- form + tabs + wiring ---------- */
-document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+document.getElementById('f-date').max=today(); document.getElementById('f-date').value=today();
 document.getElementById('testform').addEventListener('submit',e=>{
   e.preventDefault();
   const g=id=>{const v=document.getElementById(id).value; return v===''?null:+v;};
-  const t={date:document.getElementById('f-date').value||new Date().toISOString().slice(0,10),
+  const t={date:document.getElementById('f-date').value||today(),
     nh3:g('f-nh3'),no2:g('f-no2'),no3:g('f-no3'),kh:g('f-kh'),ph:g('f-ph'),gh:g('f-gh'),temp:g('f-temp'),
     note:document.getElementById('f-note').value.trim()};
+  tests = load() || tests;   // another window may have saved since startup: merge, don't clobber
   tests.push(t); save(tests);
   nudgeAfterSave();
   renderVerdicts(t, document.getElementById('verdicts'));
   renderHistory(); renderTrends();
-  document.getElementById('verdicts').scrollIntoView({behavior:'smooth',block:'start'});
-  e.target.reset(); document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('verdicts').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  e.target.reset(); document.getElementById('f-date').value=today();
 });
 
 function show(tab){
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tab));
-  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tabbar button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab); if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');});
   if(tab==='trends')drawChart();
 }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
@@ -242,7 +250,7 @@ function tankmateSwitch(id){
 // Readings typed for one tank must never be saved into another: clear the form on every tank change.
 function resetEntryForm(){
   const f=document.getElementById('testform'); if(!f) return;
-  f.reset(); document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  f.reset(); document.getElementById('f-date').value=today();
 }
 // Called by the native shell. Pro state is pushed in; it is never read back from storage.
 window.tankmateApplyNative=function(o){
