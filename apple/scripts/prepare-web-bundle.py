@@ -47,6 +47,9 @@ STRIP_PATTERNS = [
     # The inline script that reveals the button once a real checkout URL exists.
     re.compile(r"<script>(?:(?!</script>).)*coffee-btn(?:(?!</script>).)*</script>",
                re.IGNORECASE | re.DOTALL),
+    # The PWA "install / add to home screen" nudge means nothing inside the native app,
+    # and nudge.js is not bundled. app.js tolerates its absence (nudgeAfterSave guard).
+    re.compile(r"<script\b[^>]*\bsrc=\"nudge\.js\"[^>]*>\s*</script>\s*", re.IGNORECASE),
 ]
 
 # Tidy the separator the removed link used to sit behind ("Made by Marc · ").
