@@ -65,3 +65,20 @@ test('setActive ignores unknown ids', () => {
   assert.equal(T.setActive(s, 'nope').active, 'second');
   assert.equal(T.setActive(s, 'default').active, 'default');
 });
+
+test('registry repair keeps well-formed tanks and drops only malformed ones', () => {
+  const s = mem();
+  s.setItem(T.REGISTRY, JSON.stringify({ v: 1, active: 'reef', tanks: [{ id: 'default', name: 'A' }, { id: 'reef', name: 'Reef' }, { id: 'bad' }] }));
+  const reg = T.ensureRegistry(s);
+  assert.deepEqual(reg.tanks.map(t => t.id), ['default', 'reef']);
+  assert.equal(reg.active, 'reef');
+});
+
+test('addTank never overwrites the tests of an orphaned tank with the same slug', () => {
+  const s = mem();
+  const orphan = JSON.stringify([{ date: '2026-06-01', no3: 5 }]);
+  s.setItem(T.testsKey('reef'), orphan);
+  const tank = T.addTank(s, 'Reef');
+  assert.notEqual(tank.id, 'reef');
+  assert.equal(s.getItem(T.testsKey('reef')), orphan);
+});

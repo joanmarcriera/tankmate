@@ -29,8 +29,9 @@
   /** Create/repair the registry. Returns it. Never touches test records. */
   function ensureRegistry(storage, legacyName) {
     let reg = readJSON(storage, REGISTRY);
-    const valid = reg && Array.isArray(reg.tanks) && reg.tanks.every(t => t && t.id && t.name);
-    if (!valid) reg = { v: 1, active: DEFAULT_ID, tanks: [] };
+    // Drop malformed entries instead of discarding the whole registry (keeps other tanks reachable).
+    if (!reg || !Array.isArray(reg.tanks)) reg = { v: 1, active: DEFAULT_ID, tanks: [] };
+    else reg.tanks = reg.tanks.filter(t => t && t.id && t.name);
     if (!reg.tanks.some(t => t.id === DEFAULT_ID)) {
       reg.tanks.unshift({ id: DEFAULT_ID, name: legacyName || DEFAULT_NAME });
     }
@@ -49,7 +50,8 @@
     const clean = String(name || '').trim().slice(0, 40);
     if (!clean) throw new Error('Tank name required');
     let id = slug(clean), n = 2;
-    while (reg.tanks.some(t => t.id === id) || id === DEFAULT_ID) id = `${slug(clean)}-${n++}`;
+    // Also skip ids whose tests key already exists (orphans of a repaired registry): never overwrite them.
+    while (reg.tanks.some(t => t.id === id) || id === DEFAULT_ID || storage.getItem(testsKey(id)) !== null) id = `${slug(clean)}-${n++}`;
     const tank = { id, name: clean };
     reg.tanks.push(tank);
     reg.active = id;
