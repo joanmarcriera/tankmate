@@ -81,6 +81,5 @@ body.has-nudge{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 
 /* Keyboard focus: visible on every interactive control (the dark theme hides the default ring). */
 a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-h1:focus{outline:none}
+summary:focus-visible,.tabbar button:focus-visible{outline-offset:-2px} /* parents clip an outside ring */
 footer a{color:var(--acc)}
-.tabbar button{min-height:48px}

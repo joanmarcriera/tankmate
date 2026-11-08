@@ -30,7 +30,8 @@ test('styles.css defines a visible :focus-visible ring for controls', () => {
   assert.match(css, /:focus-visible\s*\{[^}]*outline:\s*2px/);
 });
 
-test('the tab bar landmark is labelled and tab changes move focus to the heading', () => {
+test('the tab bar landmark is labelled and tab changes are announced', () => {
   assert.match(read('index.html'), /<nav class="tabbar" aria-label="[^"]+"/);
-  assert.match(read('app.js'), /h\.focus\(\{preventScroll:true\}\)/);
+  assert.match(read('index.html'), /id="tabannounce"[^>]*role="status"/);
+  assert.match(read('app.js'), /getElementById\('tabannounce'\)/);
 });

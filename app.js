@@ -249,9 +249,12 @@ function show(tab){
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tab));
   document.querySelectorAll('.tabbar button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab); if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');});
   if(tab==='trends')drawChart();
-  // Keyboard / screen-reader users: land on the new section heading, not the old button.
+  // Keep focus on the tab button (so keyboard users keep their place in the bar) and
+  // announce the new section to screen readers instead.
   const h=document.querySelector('#tab-'+tab+' h1');
-  if(h){ h.tabIndex=-1; h.focus({preventScroll:true}); }
+  const a=document.getElementById('tabannounce');
+  if(h&&a) a.textContent=h.textContent;
+  window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
 document.getElementById('h-gen').onclick=renderHandover;
