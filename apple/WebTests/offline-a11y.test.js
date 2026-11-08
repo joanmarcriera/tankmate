@@ -35,3 +35,13 @@ test('the tab bar landmark is labelled and tab changes are announced', () => {
   assert.match(read('index.html'), /id="tabannounce"[^>]*role="status"/);
   assert.match(read('app.js'), /getElementById\('tabannounce'\)/);
 });
+
+test('index.html carries the SEO/share meta and a noscript notice', () => {
+  const html = read('index.html');
+  const desc = (html.match(/<meta name="description" content="([^"]+)"/) || [])[1] || '';
+  assert.ok(desc.length >= 80 && desc.length <= 300, `description length ${desc.length}`);
+  assert.match(html, /<meta property="og:title"/);
+  assert.match(html, /<link rel="icon" href="icon\.svg"/);
+  assert.match(html, /<noscript>/);
+  assert.equal((html.match(/<title>/g) || []).length, 1);
+});
