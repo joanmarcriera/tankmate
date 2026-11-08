@@ -51,7 +51,7 @@ test('contrast: chart axis labels (canvas, panel background) meet AA', () => {
 
 /* ---- renderHandover ---- */
 function handoverCtx({ days = '7', friend = '', tests = [] } = {}) {
-  const el = { innerHTML: '', h3: null, querySelector(sel) { return sel === 'h3' && this.innerHTML.includes('<h3>') ? this.h3 : null; } };
+  const el = { innerHTML: '', h3: null, querySelector(sel) { return sel === 'h3' && /<h3[\s>]/.test(this.innerHTML) ? this.h3 : null; } };
   el.h3 = { tabIndex: undefined, focused: 0, focus() { this.focused++; } };
   const inputs = { 'h-days': { value: days }, 'h-friend': { value: friend }, handover: el };
   const c = vm.createContext({ tests, document: { getElementById: id => inputs[id] }, worst: () => 'good' });
@@ -90,8 +90,9 @@ test('renderHandover: with no tests it says "—" for the last test date', () =>
 
 /* ---- chart: not colour-only ---- */
 test('drawChart: KH is dashed, nitrate solid, legend names both line styles', () => {
-  const dashes = [];
-  const ctx2d = new Proxy({ setLineDash: d => dashes.push(d.length), measureText: () => ({ width: 0 }) },
+  const ev = [];   // ordered: dash pattern in force at each stroke()
+  let dash = 0;
+  const ctx2d = new Proxy({ setLineDash: d => { dash = d.length; ev.push('dash' + d.length); }, stroke: () => ev.push('stroke@' + dash), measureText: () => ({ width: 0 }) },
     { get: (t, k) => k in t ? t[k] : () => {}, set: () => true });
   const canvas = { clientWidth: 300, width: 0, height: 0, attrs: {}, getContext: () => ctx2d, setAttribute(k, v) { this.attrs[k] = v; } };
   const legend = { innerHTML: '' };
@@ -102,8 +103,10 @@ test('drawChart: KH is dashed, nitrate solid, legend names both line styles', ()
   vm.runInContext([app.split('\n').find(l => l.startsWith('const MONTHS')), app.split('\n').find(l => l.startsWith('function shortDate')),
     app.split('\n').find(l => l.startsWith('function chartLabelIdx')), block('function drawChart')].join('\n'), c);
   vm.runInContext('drawChart()', c);
-  assert.ok(dashes.includes(2), 'KH series set a 2-value dash pattern');
-  assert.ok(dashes.includes(0), 'nitrate series stays solid / dash reset');
+  // series order is no3 then kh: nitrate strokes solid, KH strokes dashed, and the dash is reset after.
+  const strokes = ev.filter(e => e.startsWith('stroke'));
+  assert.deepEqual(strokes, ['stroke@0', 'stroke@2'], ev.join(','));
+  assert.equal(ev[ev.length - 1], 'dash0', 'dash reset after the last series');
   assert.match(legend.innerHTML, /NO₃ nitrate \(solid\)/);
   assert.match(legend.innerHTML, /KH buffer \(dashed\)/);
   assert.match(canvas.attrs['aria-label'], /2 tests from 1 Jan to 8 Jan/);
@@ -118,17 +121,28 @@ test('decorative glyphs are hidden from assistive tech', () => {
 
 test('tab-bar buttons are at least 44px tall; the new-tab footer link says so', () => {
   const m = /\.tabbar button\{[^}]*min-height:(\d+)px/.exec(css);
-  assert.ok(m && +m[1] >= 44);
+  assert.ok(m && +m[1] >= 48);
   assert.match(html, /Buy me a coffee<span class="sr-only"> \(opens in a new tab\)<\/span>/);
 });
 
-test('numeric test fields bring up the number keypad and skip autofill', () => {
-  for (const id of ['nh3', 'no2', 'no3', 'kh', 'ph', 'gh', 'temp']) {
+test('numeric test fields bring up the right number keypad and skip autofill', () => {
+  const want = { nh3: 'decimal', no2: 'decimal', no3: 'numeric', kh: 'numeric', ph: 'decimal', gh: 'numeric', temp: 'decimal' };
+  for (const id of Object.keys(want)) {
     const tag = new RegExp(`<input[^>]*id="f-${id}"[^>]*>`).exec(html);
     assert.ok(tag, id);
-    assert.match(tag[0], /inputmode="decimal"/, id);
+    assert.match(tag[0], new RegExp(`inputmode="${want[id]}"`), id);
     assert.match(tag[0], /autocomplete="off"/, id);
   }
+});
+
+test('iOS bundle strip removes the new-tab sr-only text together with the coffee link', () => {
+  const os = require('node:os');
+  const { spawnSync } = require('node:child_process');
+  const dest = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'tm-a11y-')), 'web');
+  const r = spawnSync('python3', [path.join(root, 'apple/scripts/prepare-web-bundle.py'), root, dest], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  const out = fs.readFileSync(path.join(dest, 'index.html'), 'utf8');
+  assert.ok(!/opens in a new tab/.test(out) && !/coffee/i.test(out), 'no orphaned footer text in the bundle');
 });
 
 test('every form control has an accessible name', () => {
