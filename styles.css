@@ -78,3 +78,9 @@ body.has-nudge{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 }
 
 .sr-only{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+/* Keyboard focus: visible on every interactive control (the dark theme hides the default ring). */
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+h1:focus{outline:none}
+footer a{color:var(--acc)}
+.tabbar button{min-height:48px}

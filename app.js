@@ -249,6 +249,9 @@ function show(tab){
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tab));
   document.querySelectorAll('.tabbar button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab); if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');});
   if(tab==='trends')drawChart();
+  // Keyboard / screen-reader users: land on the new section heading, not the old button.
+  const h=document.querySelector('#tab-'+tab+' h1');
+  if(h){ h.tabIndex=-1; h.focus({preventScroll:true}); }
 }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
 document.getElementById('h-gen').onclick=renderHandover;
@@ -303,7 +306,13 @@ window.tankmateState=function(){
 
 // initial paint
 repaint(); renderFeeding(); renderPlaybook();
-window.addEventListener('resize',drawChart);
+// Redraw at most once per frame, and only while the chart is visible.
+let resizeQueued=false;
+window.addEventListener('resize',()=>{
+  if(resizeQueued) return;
+  resizeQueued=true;
+  requestAnimationFrame(()=>{ resizeQueued=false; if(document.getElementById('tab-trends').classList.contains('active')) drawChart(); });
+});
 
 // PWA
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
