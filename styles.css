@@ -83,3 +83,6 @@ body.has-nudge{padding-bottom:calc(150px + env(safe-area-inset-bottom))}
 a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 summary:focus-visible,.tabbar button:focus-visible{outline-offset:-2px} /* parents clip an outside ring */
 footer a{color:var(--acc)}
+
+html{scroll-padding-bottom:90px} /* keep a focused control clear of the fixed tab bar */
+html:has(body.has-nudge){scroll-padding-bottom:160px}
