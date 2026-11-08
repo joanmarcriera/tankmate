@@ -53,10 +53,12 @@ button:hover{filter:brightness(1.08)}
 .sheet h3{margin:.2em 0} .sheet ul{padding-left:18px} .sheet .box{border:1px dashed #999;border-radius:8px;padding:10px;margin:10px 0}
 .sheet .print{background:#0b3d4f;color:#fff}
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--panel2);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
-.tabbar button{flex:1;background:none;color:var(--mut);font-weight:600;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0;border-radius:0}
+.tabbar button{flex:1;min-height:48px;background:none;color:var(--mut);font-weight:600;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0;border-radius:0}
 .tabbar button span{font-size:11px} .tabbar button.active{color:var(--acc)}
-canvas{width:100%} .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
+canvas{width:100%}
+.sheet h3:focus{outline:none} .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut);margin-top:8px}
 .legend i{display:inline-block;width:10px;height:3px;margin-right:4px;vertical-align:middle}
+.legend i.dash{width:14px;height:0;border-top:3px dashed currentColor}
 .empty{color:var(--mut);font-size:14px;text-align:center;padding:20px}
 /* Native-iOS tank switcher (only rendered when the shell reports itself). */
 #tankswitch{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:8px;

@@ -68,7 +68,7 @@ test('shortDate / chartLabelIdx', () => {
 });
 
 test('renderHandover escapes the last test date', () => {
-  const els = { 'h-days': { value: '7' }, 'h-friend': { value: '' }, handover: { innerHTML: '' } };
+  const els = { 'h-days': { value: '7' }, 'h-friend': { value: '' }, handover: { innerHTML: '', querySelector: () => null } };
   const c = vm.createContext({ tests: [{ date: EVIL }], document: { getElementById: id => els[id] }, esc: null, worst: () => 'good' });
   vm.runInContext(line('const esc') + '\n' + block('function renderHandover'), c);
   vm.runInContext('renderHandover()', c);
