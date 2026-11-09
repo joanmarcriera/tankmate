@@ -10,14 +10,14 @@
 </head>
 <body>
 <header>
-  <div class="brand">🐟 <b>Tankmate</b></div>
+  <div class="brand"><span aria-hidden="true">🐟</span> <b>Tankmate</b></div>
   <div class="tankname" id="tankname">Fluval Flex 57 L</div>
 </header>
 
 <main>
   <!-- LOG TAB -->
   <section id="tab-log" class="tab active">
-    <h1>Log a water test</h1>
+    <h1 tabindex="-1">Log a water test</h1>
     <p class="sub">Enter what your kit reads. Tankmate tells you what to <em>do</em> — not just stores a number.</p>
     <form id="testform" class="card">
       <div class="row"><label>Date</label><input type="date" id="f-date"></div>
@@ -40,7 +40,7 @@
 
   <!-- TRENDS TAB -->
   <section id="tab-trends" class="tab">
-    <h1>Trends</h1>
+    <h1 tabindex="-1">Trends</h1>
     <p class="sub">The rate of change matters more than any single reading.</p>
     <div id="trend-cards"></div>
     <div class="card"><canvas id="chart" height="180"></canvas><div class="legend" id="legend"></div></div>
@@ -48,7 +48,7 @@
 
   <!-- FEEDING TAB -->
   <section id="tab-feed" class="tab">
-    <h1>Feeding</h1>
+    <h1 tabindex="-1">Feeding</h1>
     <div id="feed-today" class="card hero"></div>
     <h2>Daily schedule</h2>
     <div class="card">
@@ -61,14 +61,14 @@
 
   <!-- PLAYBOOK TAB -->
   <section id="tab-playbook" class="tab">
-    <h1>Incident playbook</h1>
+    <h1 tabindex="-1">Incident playbook</h1>
     <p class="sub">Almost every freshwater emergency has the same first move: a partial water change.</p>
     <div id="playbook"></div>
   </section>
 
   <!-- HOLIDAY TAB -->
   <section id="tab-holiday" class="tab">
-    <h1>Holiday handover</h1>
+    <h1 tabindex="-1">Holiday handover</h1>
     <p class="sub">A friend-proof sheet for when you're away. No app does this — that's the point.</p>
     <div class="card">
       <div class="row"><label>Days away</label><input type="number" id="h-days" value="7" min="1"></div>
