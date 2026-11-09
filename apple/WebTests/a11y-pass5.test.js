@@ -54,7 +54,7 @@ function handoverCtx({ days = '7', friend = '', tests = [] } = {}) {
   const el = { innerHTML: '', h3: null, querySelector(sel) { return sel === 'h3' && /<h3[\s>]/.test(this.innerHTML) ? this.h3 : null; } };
   el.h3 = { tabIndex: undefined, focused: 0, focus() { this.focused++; } };
   const inputs = { 'h-days': { value: days }, 'h-friend': { value: friend }, handover: el };
-  const c = vm.createContext({ tests, document: { getElementById: id => inputs[id] }, worst: () => 'good' });
+  const c = vm.createContext({ tests, document: { getElementById: id => inputs[id] }, worst: () => 'good', tankName: () => 'Fluval Flex 57 L' });
   vm.runInContext([app.split('\n').find(l => l.startsWith('const esc')), block('function renderHandover')].join('\n'), c);
   return { c, el };
 }

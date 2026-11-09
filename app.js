@@ -207,6 +207,9 @@ function renderPlaybook(){
       <div class="body"><div class="first">First: ${p.first}</div><div class="then">Then: ${p.then}</div></div></details>`).join('');
 }
 
+/* Name of the tank the UI shows (registry entry of activeId). */
+const tankName=()=>(registry.tanks.find(x=>x.id===activeId)||registry.tanks[0]).name;
+
 /* ---------- HOLIDAY HANDOVER (no competitor does this) ---------- */
 function renderHandover(){
   const days=+document.getElementById('h-days').value||7;
@@ -216,7 +219,7 @@ function renderHandover(){
   const el=document.getElementById('handover');
   el.innerHTML=`<div class="sheet" id="sheet">
     <h3>🐟 Tankmate handover — ${days} days${friend?` · for ${friend}`:''}</h3>
-    <p>Tank: <b>Fluval Flex 57 L</b>. Last water test ${last?esc(last.date):'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
+    <p>Tank: <b>${esc(tankName())}</b>. Last water test ${last?esc(last.date):'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
     <div class="box"><b>Every day — morning only</b><ul>
       <li>One 3-finger pinch of the granules in the labelled pot. That's it for the day.</li>
       <li>Glance: are the fish swimming normally? Is the water clear? Is the light on its timer?</li>

@@ -69,7 +69,7 @@ test('shortDate / chartLabelIdx', () => {
 
 test('renderHandover escapes the last test date', () => {
   const els = { 'h-days': { value: '7' }, 'h-friend': { value: '' }, handover: { innerHTML: '', querySelector: () => null } };
-  const c = vm.createContext({ tests: [{ date: EVIL }], document: { getElementById: id => els[id] }, esc: null, worst: () => 'good' });
+  const c = vm.createContext({ tests: [{ date: EVIL }], document: { getElementById: id => els[id] }, esc: null, worst: () => 'good', tankName: () => 'Fluval Flex 57 L' });
   vm.runInContext(line('const esc') + '\n' + block('function renderHandover'), c);
   vm.runInContext('renderHandover()', c);
   assert.ok(!els.handover.innerHTML.includes('<img'), els.handover.innerHTML);
