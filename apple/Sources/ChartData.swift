@@ -25,6 +25,29 @@ struct TankState: Codable, Equatable {
     var active: TankInfo
     var tanks: [TankInfo]
     var tests: [TestRecord]
+
+    enum CodingKeys: String, CodingKey { case active, tanks, tests }
+}
+
+extension TankState {
+    /// Decodes test records one by one and drops the ones that do not fit `TestRecord`
+    /// (e.g. a non-string note left by an older web build). A strict array decode failed the
+    /// whole state for one odd record, which silently disabled charts and reminders.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        active = try c.decode(TankInfo.self, forKey: .active)
+        tanks = try c.decode([TankInfo].self, forKey: .tanks)
+        var list = try c.nestedUnkeyedContainer(forKey: .tests)
+        var kept: [TestRecord] = []
+        while !list.isAtEnd {
+            if let t = try? list.decode(TestRecord.self) { kept.append(t) }
+            else { _ = try list.decode(Skip.self) }   // always succeeds, so the index advances
+        }
+        tests = kept
+    }
+
+    /// Consumes one array element of any shape without reading it.
+    private struct Skip: Decodable { init(from decoder: Decoder) {} }
 }
 
 enum Parameter: String, CaseIterable, Identifiable {
@@ -129,9 +152,17 @@ enum ChartData {
             let safe = risky ? "'" + s : s
             return "\"" + safe.replacingOccurrences(of: "\"", with: "\"\"") + "\""
         }
+        // The web app normally stores yyyy-MM-dd; anything else is quoted (RFC 4180, so an
+        // embedded newline stays inside the cell) and neutralised like a note, so a stored
+        // date can never become a formula or an extra row.
+        func dateCell(_ s: String) -> String {
+            let iso = s.count == 10 && s.first?.isASCII == true && s.first?.isNumber == true
+                && s.allSatisfy { $0.isASCII && ($0.isNumber || $0 == "-") }
+            return iso ? s : quote(s)
+        }
         var lines = ["date,nh3,no2,no3,kh,ph,gh,temp,note"]
         for t in tests.sorted(by: { $0.date < $1.date }) {
-            lines.append([t.date, cell(t.nh3), cell(t.no2), cell(t.no3), cell(t.kh), cell(t.ph), cell(t.gh), cell(t.temp), quote(t.note ?? "")].joined(separator: ","))
+            lines.append([dateCell(t.date), cell(t.nh3), cell(t.no2), cell(t.no3), cell(t.kh), cell(t.ph), cell(t.gh), cell(t.temp), quote(t.note ?? "")].joined(separator: ","))
         }
         return lines.joined(separator: "\n") + "\n"
     }

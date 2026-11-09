@@ -124,6 +124,23 @@ final class ChartDataTests: XCTestCase {
         XCTAssertTrue(ChartData.csv(t).contains(",\"'=HYPERLINK(1)\""))
     }
 
+    // Review lane 2026-11-09: the date cell was joined raw, so a stored date could become a
+    // formula or (with a newline) an extra row.
+    func testCSVNeutralisesAndQuotesNonISODates() {
+        func rec(_ d: String) -> [TestRecord] { [TestRecord(date: d, nh3: 0, no2: nil, no3: 10, kh: nil, ph: nil, gh: nil, temp: nil, note: nil)] }
+        XCTAssertTrue(ChartData.csv(rec("=HYPERLINK(1)")).contains("\n\"'=HYPERLINK(1)\","))
+        XCTAssertTrue(ChartData.csv(rec("2026-01-01\n=cmd")).contains("\n\"2026-01-01\n=cmd\","))
+        XCTAssertTrue(ChartData.csv(rec("2026-06-11")).contains("\n2026-06-11,0.0,"))
+    }
+
+    // Review lane 2026-11-09: one record that does not fit TestRecord failed the whole decode,
+    // which silently disabled charts and reminders.
+    func testTankStateDropsOnlyTheRecordsThatDoNotDecode() throws {
+        let json = #"{"active":{"id":"default","name":"Flex"},"tanks":[{"id":"default","name":"Flex"}],"tests":[{"date":"2026-06-11","no3":10,"note":5},{"date":"2026-06-12","no3":12,"note":"ok"},null,7]}"#
+        let s = try JSONDecoder().decode(TankState.self, from: Data(json.utf8))
+        XCTAssertEqual(s.tests.map(\.date), ["2026-06-12"])
+    }
+
     func testTankStateDecodesWhatTheWebAppSends() throws {
         let json = #"{"active":{"id":"default","name":"Flex"},"tanks":[{"id":"default","name":"Flex"}],"tests":[{"date":"2026-06-11","nh3":0,"no2":null,"no3":10,"kh":7,"ph":7.4,"gh":null,"temp":25,"note":"x"}]}"#
         let s = try JSONDecoder().decode(TankState.self, from: Data(json.utf8))
