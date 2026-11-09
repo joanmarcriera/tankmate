@@ -235,7 +235,14 @@ function renderHandover(){
 }
 
 /* ---------- form + tabs + wiring ---------- */
-document.getElementById('f-date').max=today(); document.getElementById('f-date').value=today();
+/* The date field's max and default track the CURRENT day: an installed PWA is resumed from memory
+   for days, and a max frozen at startup made today's date invalid (the browser then blocks the
+   submit). On resume an untouched default moves to the new day; a date the user picked stays. */
+let dateDefault='';
+function setDateDefault(){ const f=document.getElementById('f-date'); f.max=today(); f.value=dateDefault=today(); }
+function refreshDate(){ const f=document.getElementById('f-date'); const keep=f.value!==dateDefault; f.max=today(); if(!keep) f.value=dateDefault=today(); }
+setDateDefault();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') refreshDate(); });
 document.getElementById('testform').addEventListener('submit',e=>{
   e.preventDefault();
   const g=id=>{const v=document.getElementById(id).value; return v===''?null:+v;};
@@ -250,7 +257,7 @@ document.getElementById('testform').addEventListener('submit',e=>{
   renderHistory(); renderTrends();
   if(!saved) document.getElementById('verdicts').insertAdjacentHTML('afterbegin','<div class="empty" role="alert">Could not save this reading (browser storage is full or blocked). It is shown here but will be lost on reload.</div>');
   document.getElementById('verdicts').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
-  e.target.reset(); document.getElementById('f-date').value=today();
+  e.target.reset(); setDateDefault();
 });
 
 function show(tab){
@@ -295,7 +302,7 @@ function tankmateSwitch(id){
 // Readings typed for one tank must never be saved into another: clear the form on every tank change.
 function resetEntryForm(){
   const f=document.getElementById('testform'); if(!f) return;
-  f.reset(); document.getElementById('f-date').value=today();
+  f.reset(); setDateDefault();
 }
 // Called by the native shell. Pro state is pushed in; it is never read back from storage.
 window.tankmateApplyNative=function(o){

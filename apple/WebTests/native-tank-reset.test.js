@@ -20,7 +20,7 @@ function setup(effectiveActive) {
   const c = vm.createContext({
     window: {}, isPro: true, activeId: 'tank2', registry: {}, tests: [],
     TankStore: { effectiveActive },
-    load: () => [], repaint: () => {}, today: () => '2026-01-01',
+    load: () => [], repaint: () => {}, today: () => '2026-01-01', setDateDefault: () => {},
     document: { getElementById: (id) => id === 'testform' ? { reset() { resets++; } } : { value: '' } },
   });
   vm.runInContext(between('function resetEntryForm', '// Native has already checked') , c);
