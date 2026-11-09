@@ -18,6 +18,8 @@ Add to Home Screen (iOS/Android) to test the installable PWA experience.
 
 No build step needed — all files are served directly.
 
+Tests (no dependencies, Node ≥ 18): `node --test` from the repo root. `tests/harness.js` loads `app.js` and `sw.js` into a Node `vm` with small DOM / cache stubs.
+
 ---
 
 ## Project layout
