@@ -38,3 +38,14 @@ test('a string note is kept as is', () => {
   const { tests } = stateWith([{ date: '2026-01-01', note: 'added 4 neons' }]);
   assert.equal(tests[0].note, 'added 4 neons');
 });
+
+// Second review (sonnet): on a browser without a date picker a typed date like "=x" was saved,
+// shown, then silently dropped on the next load. Reject it at submit instead.
+test('submit refuses a date that load() would drop, and says why', () => {
+  const store = new FakeStorage();
+  const app = boot({ storage: store });
+  app.submit({ 'f-date': '=x', 'f-no3': '5' });
+  assert.equal(app.window.tankmateState().tests.length, 0);
+  assert.equal(store.getItem(KEY), '[]');
+  assert.match(app.el('verdicts').innerHTML, /role="alert"/);
+});

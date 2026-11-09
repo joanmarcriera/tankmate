@@ -259,6 +259,9 @@ document.getElementById('testform').addEventListener('submit',e=>{
   const t={date:document.getElementById('f-date').value||today(),
     nh3:g('f-nh3'),no2:g('f-no2'),no3:g('f-no3'),kh:g('f-kh'),ph:g('f-ph'),gh:g('f-gh'),temp:g('f-temp'),
     note:document.getElementById('f-note').value.trim()};
+  // Same rule as load(): a date it would drop (typed on a browser without a date picker) is
+  // refused here, with the form kept, instead of being shown now and silently lost on reload.
+  if(!cleanTest(t)){ document.getElementById('verdicts').innerHTML='<div class="empty" role="alert">That date cannot be saved. Pick it with the date picker or type it as YYYY-MM-DD.</div>'; return; }
   tests = load() || tests;   // another window may have saved since startup: merge, don't clobber
   tests.push(t);
   const saved = save(tests);
