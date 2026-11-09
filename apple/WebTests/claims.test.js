@@ -35,3 +35,11 @@ test('web pages never load third-party scripts (the "nothing is sent" claim)', (
     for (const s of srcs) assert.doesNotMatch(s, /^(https?:)?\/\//i, `${page} loads ${s}`);
   }
 });
+
+// 69c7227 on GitHub main (Vikunja 6324) moved the coffee link to the LIVE Lemon Squeezy
+// product; the drive branches still carried the test-mode one. Never ship the test product.
+test('coffee link is the live-mode checkout, opened as a plain link', () => {
+  const html = read('index.html');
+  assert.ok(html.includes('/checkout/buy/5fbc35a0-bd77-470f-8e9b-e184199a3f4f"'), 'live product link');
+  assert.ok(!html.includes('b6678503-277f-4679-81ec-1018a8c4cc12'), 'test-mode product link');
+});

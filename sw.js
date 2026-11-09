@@ -1,5 +1,5 @@
 /* Tankmate service worker — offline-first cache. Bump VERSION to invalidate. */
-const VERSION = 'tankmate-v18';
+const VERSION = 'tankmate-v19';
 const ASSETS = ['.', 'index.html', 'styles.css', 'app.js', 'tanks.js', 'nudge.js', 'manifest.webmanifest', 'icon.svg'];
 
 self.addEventListener('install', e => {
