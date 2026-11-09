@@ -1,8 +1,16 @@
 :root{
   --bg:#0b1416; --panel:#12222a; --panel2:#0f1c22; --line:#1f3640; --ink:#e8f1f2; --mut:#8aa3ac;
   --good:#34d399; --warn:#fbbf24; --bad:#f87171; --acc:#22d3ee; --acc-d:#0b3d4f;
+  /* Form-field outline: >= 3:1 against --panel/--panel2 (WCAG 1.4.11 non-text contrast). */
+  --field:#557785;
 }
 *{box-sizing:border-box} html,body{margin:0}
+/* Keep focused / scrolled-to elements clear of the sticky header and fixed tab bar (WCAG 2.4.11). */
+html{scroll-padding-top:calc(64px + env(safe-area-inset-top));scroll-padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+/* Default link blue is 1.98:1 on the dark background; use the accent (10.3:1). */
+a{color:var(--acc)}
+/* Text for screen readers only (e.g. the verdict behind a coloured dot). */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 body{font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);padding-bottom:74px}
 /* The top padding picks up the device's safe-area inset so the header clears the
    status bar / Dynamic Island when Tankmate runs full-screen: added to the Home
@@ -21,7 +29,7 @@ h1{font-size:24px;margin:.2em 0 .1em;letter-spacing:-.02em} h2{font-size:17px;ma
 .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px}
 .card.hero{background:linear-gradient(135deg,#123,var(--panel));border-color:var(--acc-d)}
 label{display:block;font-size:12px;color:var(--mut);margin:0 0 4px}
-input,textarea,select{width:100%;padding:11px;border-radius:9px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font:inherit}
+input,textarea,select{width:100%;padding:11px;border-radius:9px;border:1px solid var(--field);background:var(--panel2);color:var(--ink);font:inherit}
 .row{margin-bottom:12px} .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 textarea{min-height:54px;margin-bottom:12px;resize:vertical}
 button{cursor:pointer;border:none;border-radius:10px;background:var(--acc);color:#022;font-weight:700;padding:12px 16px;font-size:15px;width:100%}
@@ -50,8 +58,9 @@ button:hover{filter:brightness(1.08)}
 .rot.today{border-color:var(--acc);background:rgba(34,211,238,.07)}
 .rot .day{font-weight:700;width:46px} .rot .food{flex:1} .rot .port{color:var(--mut);font-size:13px;text-align:right}
 .sheet{background:#fff;color:#111;border-radius:12px;padding:20px;font-size:14px;line-height:1.6}
-.sheet h3{margin:.2em 0} .sheet ul{padding-left:18px} .sheet .box{border:1px dashed #999;border-radius:8px;padding:10px;margin:10px 0}
+.sheet h2{margin:.2em 0;font-size:1.17em;color:inherit} .sheet ul{padding-left:18px} .sheet .box{border:1px dashed #999;border-radius:8px;padding:10px;margin:10px 0}
 .sheet .print{background:#0b3d4f;color:#fff}
+.sheet a{color:#0b3d4f}
 .tabbar{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--panel2);border-top:1px solid var(--line);padding-bottom:env(safe-area-inset-bottom)}
 .tabbar button{flex:1;background:none;color:var(--mut);font-weight:600;font-size:11px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:9px 0;border-radius:0}
 .tabbar button span{font-size:11px} .tabbar button.active{color:var(--acc)}
