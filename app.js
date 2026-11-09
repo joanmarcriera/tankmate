@@ -294,8 +294,9 @@ function resetEntryForm(){
 // Called by the native shell. Pro state is pushed in; it is never read back from storage.
 window.tankmateApplyNative=function(o){
   window.tankmateNativeShell=true; isPro=!!(o&&o.isPro);
+  const prev=activeId;
   activeId=TankStore.effectiveActive(registry,isPro);
-  tests=load()||[]; repaint();
+  tests=load()||[]; if(activeId!==prev) resetEntryForm(); repaint();
 };
 // Native has already checked the entitlement before calling this.
 window.tankmateAddTank=function(name){
