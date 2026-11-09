@@ -65,6 +65,8 @@ function renderVerdicts(t, el){
 }
 
 /* ---------- HISTORY ---------- */
+// Honour the OS "reduce motion" setting for scripted scrolling (CSS cannot override a JS 'smooth').
+const motionOK=()=>!(typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 // Spoken equivalent of the coloured dot, so the verdict is not conveyed by colour alone (WCAG 1.4.1).
 const LEVEL_TEXT={good:'all good',warn:'needs attention',bad:'act now'};
 function renderHistory(){
@@ -190,8 +192,6 @@ function renderHandover(){
 }
 
 /* ---------- form + tabs + wiring ---------- */
-// Honour the OS "reduce motion" setting for scripted scrolling (CSS cannot override a JS 'smooth').
-const motionOK=()=>!(typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion: reduce)').matches);
 document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
 document.getElementById('testform').addEventListener('submit',e=>{
   e.preventDefault();
