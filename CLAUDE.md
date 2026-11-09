@@ -24,9 +24,13 @@ No build step needed — all files are served directly.
 
 ```
 tankmate/
-├── app.js                    # Verdict engine + all UI logic (219 lines, no deps)
+├── app.js                    # Verdict engine + UI logic (~370 lines)
 ├── index.html               # HTML structure: 5 tabs (Log, Trends, Feed, Playbook, Holiday)
 ├── styles.css               # Dark theme, color-coded verdicts (good/warn/bad)
+├── tanks.js                 # Per-tank storage registry (safeStorage, tank keys)
+├── nudge.js                 # Install-nudge decisions
+├── cycling.js               # Cycling-evidence check (tests only, not wired into the UI)
+├── apple/                   # Native iOS shell + WebTests (node --test apple/WebTests/*.test.js)
 ├── sw.js                    # Service worker: offline cache, falls back to index.html
 ├── manifest.webmanifest     # PWA metadata (name, icon, display:standalone)
 ├── icon.svg                 # Single SVG icon (any-sized + maskable)
@@ -74,7 +78,7 @@ Tests are appended to array, persisted to localStorage on every save. SEED popul
 
 ## Conventions
 
-- **No build, no dependencies, no node_modules.** Static HTML/CSS/JS, service worker registration is inline.
+- **No build, no runtime dependencies, no node_modules** for the web app: static HTML/CSS/JS. Tests use only Node's built-in runner; the iOS shell (`apple/`) has its own Swift toolchain.
 - **XSS safe:** HTML escaping via `esc()` function (line 15).
 - **Responsive:** `max-width: 680px`, mobile-first, `env(safe-area-inset-bottom)` for notch/home bar.
 - **Fixed bottom nav:** 5 icon tabs, `position: fixed; bottom: 0`. Scroll room added via `padding-bottom: 74px` on body.
@@ -94,7 +98,7 @@ Files deployed as-is (no build). Served by nginx on Hetzner VPS, behind Traefik 
 
 ## Gotchas & notes
 
-1. **Service worker cache key:** Line 2 of `sw.js` is `VERSION = 'tankmate-v1'`. Bump it to invalidate caches (e.g. on CSS/JS updates).
+1. **Service worker cache key:** Line 2 of `sw.js` is `VERSION` (see the file for the current value). Bump it to invalidate caches (e.g. on CSS/JS updates).
 
 2. **localStorage scope:** Data is per-origin. If deployed to a new URL, users won't see their old tests. Consider export/import for multi-tank feature later.
 
@@ -106,7 +110,7 @@ Files deployed as-is (no build). Served by nginx on Hetzner VPS, behind Traefik 
 
 6. **No validation on test form:** Accepts null or NaN for any parameter; verdict engine skips null/NaN safely. User can submit an empty form.
 
-7. **Holiday handover generates white paper:** Printed with `@media print` styles (sheet.css line 47). Recommend PDF save via browser print dialog.
+7. **Holiday handover generates white paper:** Printed with `@media print` styles (see `styles.css`). Recommend PDF save via browser print dialog.
 
 8. **Icon is SVG:** Single vector icon used at all sizes via manifest `"sizes": "any"` + `"purpose": "maskable"`. OS may apply background on maskable icon, so test on iOS.
 
@@ -124,7 +128,7 @@ Files deployed as-is (no build). Served by nginx on Hetzner VPS, behind Traefik 
 
 ## Future (paid tier, not built yet)
 
-- Multi-tank support (separate localStorage per tank).
+- Multi-tank on the PWA (implemented for native Pro only; the PWA stays single-tank).
 - Photo timeline (store images, link to test dates).
 - Cloud sync (optional, user-initiated).
 - Local LLM advisor (point at user's Ollama or a metered API).

@@ -1,0 +1,47 @@
+{
+  "appPolicies" : {
+    "eula" : "",
+    "policies" : [
+      { "locale" : "en_US", "policyText" : "", "policyURL" : "" }
+    ]
+  },
+  "identifier" : "6A1B2C3D",
+  "nonRenewingSubscriptions" : [],
+  "products" : [],
+  "settings" : {
+    "_askToBuyEnabled" : false,
+    "_billingGracePeriodEnabled" : false,
+    "_failTransactionsEnabled" : false,
+    "_locale" : "en_GB",
+    "_storefront" : "GBR",
+    "_storeKitErrors" : []
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "21400001",
+      "localizations" : [],
+      "name" : "Tankmate Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [],
+          "codeOffers" : [],
+          "displayPrice" : "14.00",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "6740000001",
+          "introductoryOffer" : null,
+          "localizations" : [
+            { "description" : "Multi-tank, parameter charts and extra reminders", "displayName" : "Tankmate Pro (yearly)", "locale" : "en_GB" }
+          ],
+          "productID" : "uk.co.riera.tankmate.pro.yearly",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Tankmate Pro yearly",
+          "subscriptionGroupID" : "21400001",
+          "type" : "RecurringSubscription",
+          "winbackOffers" : []
+        }
+      ]
+    }
+  ],
+  "version" : { "major" : 4, "minor" : 0 }
+}

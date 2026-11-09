@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b3d4f">
 <title>Tankmate — your aquarium co-pilot</title>
+<meta name="description" content="Free local-first aquarium app: log water tests and get a plain verdict and action for ammonia, nitrite, nitrate, KH and pH, plus trends, feeding rotation, an incident playbook and a holiday handover sheet. Works offline; your data stays on your device.">
+<meta name="color-scheme" content="dark">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Tankmate — your aquarium co-pilot">
+<meta property="og:description" content="Log a water test, get a verdict and what to do next. Offline, private, no account.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="styles.css">
 </head>
@@ -14,26 +21,28 @@
   <div class="tankname" id="tankname">Fluval Flex 57 L</div>
 </header>
 
+<noscript><p style="padding:16px">Tankmate needs JavaScript to run. Nothing is sent anywhere: your tests stay on this device.</p></noscript>
+
 <main>
   <!-- LOG TAB -->
   <section id="tab-log" class="tab active">
     <h1>Log a water test</h1>
     <p class="sub">Enter what your kit reads. Tankmate tells you what to <em>do</em> — not just stores a number.</p>
     <form id="testform" class="card">
-      <div class="row"><label>Date</label><input type="date" id="f-date"></div>
+      <div class="row"><label for="f-date">Date</label><input type="date" id="f-date"></div>
       <div class="grid2">
-        <div><label>NH₃ ammonia (ppm)</label><input type="number" step="0.01" id="f-nh3" placeholder="0"></div>
-        <div><label>NO₂ nitrite (ppm)</label><input type="number" step="0.01" id="f-no2" placeholder="0"></div>
-        <div><label>NO₃ nitrate (ppm)</label><input type="number" step="1" id="f-no3" placeholder="10"></div>
-        <div><label>KH (dKH)</label><input type="number" step="1" id="f-kh" placeholder="7"></div>
-        <div><label>pH</label><input type="number" step="0.1" id="f-ph" placeholder="7.4"></div>
-        <div><label>GH (dGH)</label><input type="number" step="1" id="f-gh" placeholder=""></div>
-        <div><label>Temp (°C)</label><input type="number" step="0.1" id="f-temp" placeholder="25"></div>
+        <div><label for="f-nh3">NH₃ ammonia (ppm)</label><input type="number" step="0.01" id="f-nh3" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        <div><label for="f-no2">NO₂ nitrite (ppm)</label><input type="number" step="0.01" id="f-no2" inputmode="decimal" autocomplete="off" placeholder="0"></div>
+        <div><label for="f-no3">NO₃ nitrate (ppm)</label><input type="number" step="1" id="f-no3" inputmode="numeric" autocomplete="off" placeholder="10"></div>
+        <div><label for="f-kh">KH (dKH)</label><input type="number" step="1" id="f-kh" inputmode="numeric" autocomplete="off" placeholder="7"></div>
+        <div><label for="f-ph">pH</label><input type="number" step="0.1" id="f-ph" inputmode="decimal" autocomplete="off" placeholder="7.4"></div>
+        <div><label for="f-gh">GH (dGH)</label><input type="number" step="1" id="f-gh" inputmode="numeric" autocomplete="off" placeholder=""></div>
+        <div><label for="f-temp">Temp (°C)</label><input type="number" step="0.1" id="f-temp" inputmode="decimal" autocomplete="off" placeholder="25"></div>
       </div>
-      <textarea id="f-note" placeholder="Note (e.g. 'added 4 neons', 'found dead shrimp')"></textarea>
+      <textarea id="f-note" aria-label="Note" placeholder="Note (e.g. 'added 4 neons', 'found dead shrimp')"></textarea>
       <button type="submit">Save & read verdict</button>
     </form>
-    <div id="verdicts"></div>
+    <div id="verdicts" aria-live="polite"></div>
     <h2>History</h2>
     <div id="history" class="history"></div>
   </section>
@@ -43,7 +52,7 @@
     <h1>Trends</h1>
     <p class="sub">The rate of change matters more than any single reading.</p>
     <div id="trend-cards"></div>
-    <div class="card"><canvas id="chart" height="180"></canvas><div class="legend" id="legend"></div></div>
+    <div class="card"><canvas id="chart" height="180" role="img" aria-label="Chart of nitrate and KH over time"></canvas><div class="legend" id="legend"></div></div>
   </section>
 
   <!-- FEEDING TAB -->
@@ -71,28 +80,35 @@
     <h1>Holiday handover</h1>
     <p class="sub">A friend-proof sheet for when you're away. No app does this — that's the point.</p>
     <div class="card">
-      <div class="row"><label>Days away</label><input type="number" id="h-days" value="7" min="1"></div>
-      <div class="row"><label>Friend's name</label><input type="text" id="h-friend" placeholder="(optional)"></div>
+      <div class="row"><label for="h-days">Days away</label><input type="number" id="h-days" value="7" min="1"></div>
+      <div class="row"><label for="h-friend">Friend's name</label><input type="text" id="h-friend" placeholder="(optional)"></div>
       <button id="h-gen">Generate handover sheet</button>
     </div>
     <div id="handover"></div>
   </section>
   <footer style="text-align:center;color:var(--mut);font-size:13px;padding:18px 0 4px">
-    Made by Marc · <a class="coffee-btn lemonsqueezy-button" href="https://marcriera.lemonsqueezy.com/checkout/buy/5fbc35a0-bd77-470f-8e9b-e184199a3f4f?embed=1" style="display:none">☕ Buy me a coffee</a>
+    Made by Marc · <a class="coffee-btn lemonsqueezy-button" href="https://marcriera.lemonsqueezy.com/checkout/buy/5fbc35a0-bd77-470f-8e9b-e184199a3f4f" target="_blank" rel="noopener noreferrer" style="display:none">☕ Buy me a coffee<span class="sr-only"> (opens in a new tab)</span></a>
   </footer>
 </main>
 
-<nav class="tabbar">
-  <button data-tab="log" class="active">📋<span>Log</span></button>
-  <button data-tab="trends">📈<span>Trends</span></button>
-  <button data-tab="feed">🍤<span>Feed</span></button>
-  <button data-tab="playbook">🚨<span>Playbook</span></button>
-  <button data-tab="holiday">✈️<span>Holiday</span></button>
+<div id="tabannounce" class="sr-only" role="status"></div>
+<nav class="tabbar" aria-label="Sections">
+  <button data-tab="log" class="active" aria-current="page"><span aria-hidden="true">📋</span><span>Log</span></button>
+  <button data-tab="trends"><span aria-hidden="true">📈</span><span>Trends</span></button>
+  <button data-tab="feed"><span aria-hidden="true">🍤</span><span>Feed</span></button>
+  <button data-tab="playbook"><span aria-hidden="true">🚨</span><span>Playbook</span></button>
+  <button data-tab="holiday"><span aria-hidden="true">✈️</span><span>Holiday</span></button>
 </nav>
 
+<div id="installnudge" class="nudge" role="note" hidden>
+  <span id="nudge-text"></span>
+  <button id="nudge-install" type="button" hidden>Install Tankmate</button>
+  <button id="nudge-close" type="button" aria-label="Dismiss">✕</button>
+</div>
+
+<script src="tanks.js"></script>
+<script src="nudge.js"></script>
 <script src="app.js"></script>
-<!-- Lemon Squeezy hosted-checkout overlay -->
-<script src="https://app.lemonsqueezy.com/js/lemon.js" defer></script>
 <script>
   // Reveal the coffee button only once a real checkout URL is configured.
   document.querySelectorAll('.coffee-btn').forEach(function (b) {

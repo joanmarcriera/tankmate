@@ -7,14 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0D360221A8F4C24D8851FED8 /* LogicTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = F3E364008187F73AA0667A32 /* LogicTests.swift */; };
+		214A7B8D1E1992E352F97DD6 /* PaywallView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2552B510CA965BEE16F43EDB /* PaywallView.swift */; };
 		2AC788EEBF88A4EA422C6378 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C4A3B2D75A6E711C8BBC77F7 /* Assets.xcassets */; };
+		340CAE42C32EAB088A7C8D91 /* ProStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 63101159EDF9D6CD4CEA02B0 /* ProStore.swift */; };
+		3AA1F974BBBE201B367F9AC5 /* Tankmate.storekit in Resources */ = {isa = PBXBuildFile; fileRef = 6F7090EEAC08A61365D9C534 /* Tankmate.storekit */; };
+		42AF670ECCFC570CAF0AC602 /* ProStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DCB9A2924934E02606E108EB /* ProStoreTests.swift */; };
 		53C35EA9BE2D34FACC9DEEA4 /* TankmateApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FA0C395487F710DD23FDC6F9 /* TankmateApp.swift */; };
 		6447B69CC8284F7D614073CC /* ReminderScheduler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B46328C27A89F157E344346D /* ReminderScheduler.swift */; };
 		6C4A456391F333B5E1981768 /* TankmateUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 87E596175AE46433DBA96964 /* TankmateUITests.swift */; };
 		87F6FDB6A60233796E2D3D00 /* PushRegistrar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C96B0FBFB34973BD9622AD1 /* PushRegistrar.swift */; };
 		99F5524A4D0A23CF69949558 /* RemindersView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FDB146058B116B7BA851397B /* RemindersView.swift */; };
+		9B3CB898C275B9AC46094BEF /* ProGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 052808C1EE58B3FFFD5F2F9E /* ProGate.swift */; };
 		9BFE8C33DA8B4BD1B6917DA8 /* WebAppView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C2412AC7D8B7DFE2DCCF571 /* WebAppView.swift */; };
+		B4E3B86C908458520767A8C8 /* ReminderPlan.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5D85416DCF6B03DB43C938A /* ReminderPlan.swift */; };
+		D357A23ECF347CBA1BB0656E /* ChartsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 058647BBB1933B4835BA29A3 /* ChartsView.swift */; };
 		DF5FF4671D9799579BA225ED /* BundledWebSchemeHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = A86596F7162FEFFDE2F6D1C5 /* BundledWebSchemeHandler.swift */; };
+		E9A246A2233A4FA5373B3957 /* ChartData.swift in Sources */ = {isa = PBXBuildFile; fileRef = E30300213AB7AD45839D0DD2 /* ChartData.swift */; };
 		EA523879D90C9BCC47D66F95 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0CC53DED1A57751ED76BF1A9 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
@@ -26,19 +35,36 @@
 			remoteGlobalIDString = 3BC0E2C67006E83F1F2B4904;
 			remoteInfo = Tankmate;
 		};
+		53C4A3E62D6F90BFD4CAAD63 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 36395C310FC579227A47A6F0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 3BC0E2C67006E83F1F2B4904;
+			remoteInfo = Tankmate;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		052808C1EE58B3FFFD5F2F9E /* ProGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProGate.swift; sourceTree = "<group>"; };
+		058647BBB1933B4835BA29A3 /* ChartsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartsView.swift; sourceTree = "<group>"; };
 		0CC53DED1A57751ED76BF1A9 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		143F0C68C6D00026BA23AECF /* Tankmate.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Tankmate.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		2552B510CA965BEE16F43EDB /* PaywallView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaywallView.swift; sourceTree = "<group>"; };
+		4B472D7428B26A41CD2A56B1 /* TankmateTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TankmateTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C2412AC7D8B7DFE2DCCF571 /* WebAppView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebAppView.swift; sourceTree = "<group>"; };
 		4C96B0FBFB34973BD9622AD1 /* PushRegistrar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PushRegistrar.swift; sourceTree = "<group>"; };
 		60C16955CC9C6134DC8CFA33 /* TankmateUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = TankmateUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		63101159EDF9D6CD4CEA02B0 /* ProStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStore.swift; sourceTree = "<group>"; };
+		6F7090EEAC08A61365D9C534 /* Tankmate.storekit */ = {isa = PBXFileReference; path = Tankmate.storekit; sourceTree = "<group>"; };
 		87931D26660478A4E5FA15B4 /* AppStore.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = AppStore.xcconfig; sourceTree = "<group>"; };
 		87E596175AE46433DBA96964 /* TankmateUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TankmateUITests.swift; sourceTree = "<group>"; };
 		A86596F7162FEFFDE2F6D1C5 /* BundledWebSchemeHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BundledWebSchemeHandler.swift; sourceTree = "<group>"; };
 		B46328C27A89F157E344346D /* ReminderScheduler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderScheduler.swift; sourceTree = "<group>"; };
 		C4A3B2D75A6E711C8BBC77F7 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		DCB9A2924934E02606E108EB /* ProStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProStoreTests.swift; sourceTree = "<group>"; };
+		E30300213AB7AD45839D0DD2 /* ChartData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ChartData.swift; sourceTree = "<group>"; };
+		F3E364008187F73AA0667A32 /* LogicTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LogicTests.swift; sourceTree = "<group>"; };
+		F5D85416DCF6B03DB43C938A /* ReminderPlan.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderPlan.swift; sourceTree = "<group>"; };
 		FA0C395487F710DD23FDC6F9 /* TankmateApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TankmateApp.swift; sourceTree = "<group>"; };
 		FDB146058B116B7BA851397B /* RemindersView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -64,7 +90,13 @@
 			isa = PBXGroup;
 			children = (
 				A86596F7162FEFFDE2F6D1C5 /* BundledWebSchemeHandler.swift */,
+				E30300213AB7AD45839D0DD2 /* ChartData.swift */,
+				058647BBB1933B4835BA29A3 /* ChartsView.swift */,
+				2552B510CA965BEE16F43EDB /* PaywallView.swift */,
+				052808C1EE58B3FFFD5F2F9E /* ProGate.swift */,
+				63101159EDF9D6CD4CEA02B0 /* ProStore.swift */,
 				4C96B0FBFB34973BD9622AD1 /* PushRegistrar.swift */,
+				F5D85416DCF6B03DB43C938A /* ReminderPlan.swift */,
 				B46328C27A89F157E344346D /* ReminderScheduler.swift */,
 				FDB146058B116B7BA851397B /* RemindersView.swift */,
 				FA0C395487F710DD23FDC6F9 /* TankmateApp.swift */,
@@ -76,9 +108,11 @@
 		71AEAC9406C6465DEFBAA3A6 = {
 			isa = PBXGroup;
 			children = (
+				6F7090EEAC08A61365D9C534 /* Tankmate.storekit */,
 				2CA61E29E9C4369BFCCC4810 /* configs */,
 				8060FEC8D85061613F48DAB6 /* Resources */,
 				6DB8BF8281C9FDE623543FBE /* Sources */,
+				CD8A0231C02F02F4FDC56046 /* Tests */,
 				499021692E6D0904821508AB /* UITests */,
 				D11D2F3849ABDDA3DE6F428A /* Products */,
 			);
@@ -93,10 +127,20 @@
 			path = Resources;
 			sourceTree = "<group>";
 		};
+		CD8A0231C02F02F4FDC56046 /* Tests */ = {
+			isa = PBXGroup;
+			children = (
+				F3E364008187F73AA0667A32 /* LogicTests.swift */,
+				DCB9A2924934E02606E108EB /* ProStoreTests.swift */,
+			);
+			path = Tests;
+			sourceTree = "<group>";
+		};
 		D11D2F3849ABDDA3DE6F428A /* Products */ = {
 			isa = PBXGroup;
 			children = (
 				143F0C68C6D00026BA23AECF /* Tankmate.app */,
+				4B472D7428B26A41CD2A56B1 /* TankmateTests.xctest */,
 				60C16955CC9C6134DC8CFA33 /* TankmateUITests.xctest */,
 			);
 			name = Products;
@@ -142,6 +186,25 @@
 			productReference = 60C16955CC9C6134DC8CFA33 /* TankmateUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		B805ABB361A900720314343D /* TankmateTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = D0069B6768FB3FA252D40CAA /* Build configuration list for PBXNativeTarget "TankmateTests" */;
+			buildPhases = (
+				1A6133AFCB9A73E5571A42CF /* Sources */,
+				67152E054EBE24777E3DB33D /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F54F46B516CB2C3454ED4571 /* PBXTargetDependency */,
+			);
+			name = TankmateTests;
+			packageProductDependencies = (
+			);
+			productName = TankmateTests;
+			productReference = 4B472D7428B26A41CD2A56B1 /* TankmateTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -159,6 +222,10 @@
 						DevelopmentTeam = "";
 						ProvisioningStyle = Manual;
 						TestTargetID = 3BC0E2C67006E83F1F2B4904;
+					};
+					B805ABB361A900720314343D = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Manual;
 					};
 				};
 			};
@@ -178,11 +245,20 @@
 			targets = (
 				3BC0E2C67006E83F1F2B4904 /* Tankmate */,
 				7073131B01B9DB9C3EE82FEE /* TankmateUITests */,
+				B805ABB361A900720314343D /* TankmateTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
+		67152E054EBE24777E3DB33D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3AA1F974BBBE201B367F9AC5 /* Tankmate.storekit in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		85980747FE53D43AD3071755 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -217,12 +293,27 @@
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
+		1A6133AFCB9A73E5571A42CF /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0D360221A8F4C24D8851FED8 /* LogicTests.swift in Sources */,
+				42AF670ECCFC570CAF0AC602 /* ProStoreTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		1BD6BE53B236B23AC3E55715 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
 				DF5FF4671D9799579BA225ED /* BundledWebSchemeHandler.swift in Sources */,
+				E9A246A2233A4FA5373B3957 /* ChartData.swift in Sources */,
+				D357A23ECF347CBA1BB0656E /* ChartsView.swift in Sources */,
+				214A7B8D1E1992E352F97DD6 /* PaywallView.swift in Sources */,
+				9B3CB898C275B9AC46094BEF /* ProGate.swift in Sources */,
+				340CAE42C32EAB088A7C8D91 /* ProStore.swift in Sources */,
 				87F6FDB6A60233796E2D3D00 /* PushRegistrar.swift in Sources */,
+				B4E3B86C908458520767A8C8 /* ReminderPlan.swift in Sources */,
 				6447B69CC8284F7D614073CC /* ReminderScheduler.swift in Sources */,
 				99F5524A4D0A23CF69949558 /* RemindersView.swift in Sources */,
 				53C35EA9BE2D34FACC9DEEA4 /* TankmateApp.swift in Sources */,
@@ -246,9 +337,31 @@
 			target = 3BC0E2C67006E83F1F2B4904 /* Tankmate */;
 			targetProxy = 25DFAD0327A3DD51DD207E29 /* PBXContainerItemProxy */;
 		};
+		F54F46B516CB2C3454ED4571 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 3BC0E2C67006E83F1F2B4904 /* Tankmate */;
+			targetProxy = 53C4A3E62D6F90BFD4CAAD63 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
+		1EED602B09A34634DB60FA61 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uk.co.riera.tankmate.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tankmate.app/Tankmate";
+			};
+			name = Release;
+		};
 		54C6D0AA3BC706450813F49B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -419,6 +532,23 @@
 			};
 			name = Debug;
 		};
+		C897FD40F20DAA5463EC9767 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = uk.co.riera.tankmate.tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Tankmate.app/Tankmate";
+			};
+			name = Debug;
+		};
 		E24F488575096506E56FD9BE /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -488,6 +618,15 @@
 			buildConfigurations = (
 				93998DF18BD3FB3F61C6FE56 /* Debug */,
 				E24F488575096506E56FD9BE /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D0069B6768FB3FA252D40CAA /* Build configuration list for PBXNativeTarget "TankmateTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C897FD40F20DAA5463EC9767 /* Debug */,
+				1EED602B09A34634DB60FA61 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

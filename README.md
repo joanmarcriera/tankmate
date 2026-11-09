@@ -31,7 +31,7 @@ That gives you a public URL to drop into Fishlore / r/Aquariums / UK fishkeeping
 Per the brainstorm, these are the Pro tier once there are real users: multi-tank, photo timeline, cloud sync, the AI advisor (point it at Marc's local LLM or a metered API), and the Home Assistant sensor bridge (Marc's unfair advantage). The free tier deliberately keeps the basics free — the #1 complaint about AquaticLog's paywall.
 
 ## Honest status
-This PWA validates the **product thesis** (judgement, not storage) at £0 cost-to-release. The brainstorm's longer-term recommendation is a Flutter/native build for proper iOS notifications + camera; treat this PWA as the live proof-of-concept and the review-gap pilot (candidate C7). If forum feedback is warm, graduate to native; if it's flat, you've spent £0 finding out.
+This PWA validates the **product thesis** (judgement, not storage) at £0 cost-to-release. The brainstorm's longer-term recommendation is a Flutter/native build for proper iOS notifications + camera; treat this PWA as the live proof-of-concept and the review-gap pilot (candidate C7). A native iOS shell already exists in `apple/` (StoreKit, charts, reminders; not yet in App Store Connect). Forum feedback on the PWA decides how much further to invest.
 
 <!-- vikunja-tracking -->
 ## Tracking

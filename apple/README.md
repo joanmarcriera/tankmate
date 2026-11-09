@@ -70,6 +70,7 @@ useful for a tank. See `docs/APP-STORE-CONNECT.md` §7.
 
 ## Releasing
 
-Not wired yet. `docs/APP-STORE-CONNECT.md` has the App Store Connect record steps, the
-signing list, the repo secrets, and the archive/export/upload commands, adapted from the
-`deploy-to-apple` skill. The App Store Connect record does not exist yet.
+`.github/workflows/release-appstore-ios.yml` (trigger: tag `ios-v*`, or manual dispatch)
+archives, exports and uploads to TestFlight. It does not submit for review; that stays a
+manual, approved step. `docs/APP-STORE-CONNECT.md` has the App Store Connect record steps,
+the signing list and the repo secrets. The App Store Connect record does not exist yet.

@@ -2,21 +2,58 @@
    The differentiator vs every existing app: it gives VERDICTS and ACTIONS,
    not just stored numbers. Rules encoded from real freshwater chemistry. */
 
-const STORE = 'tankmate.tests.v1';
 const TANK = 'tankmate.tank.v1';
 
-/* ---------- seed: Marc's real Fluval Flex 57 L, 2026-06-11 ---------- */
-const SEED = [
-  { date:'2025-12-20', nh3:0, no2:0.5, no3:15, kh:4, ph:7.2, temp:25, note:'after adding fish — NO2 spike' },
-  { date:'2026-05-30', nh3:0, no2:0.25, no3:20, kh:3, ph:7.1, temp:25, note:'instability; started water-change run' },
-  { date:'2026-06-11', nh3:0, no2:0, no3:10, kh:7, ph:7.4, temp:25, note:'healthy after 5–6 water changes' },
-];
+/* First run starts empty for every tank: the owner's sample readings are no longer
+   shipped as the user's history. */
 
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const load = () => { try { return JSON.parse(localStorage.getItem(STORE)) || null } catch { return null } };
-const save = (a) => localStorage.setItem(STORE, JSON.stringify(a));
+
+/* ---------- MULTI-TANK (tanks.js). Free tier = the default tank only; the native iOS
+   shell reports Pro via window.tankmateApplyNative({isPro}). On the PWA nothing sets it,
+   so the PWA stays single-tank. ---------- */
+let isPro = false;
+const { store: storage, persistent: storagePersistent } = TankStore.safeStorage(window);
+let registry = TankStore.ensureRegistry(storage, document.getElementById('tankname').textContent.trim());
+let activeId = TankStore.effectiveActive(registry, isPro);
+const STORE_NOW = () => TankStore.testsKey(activeId);
+const NUMERIC = ['nh3','no2','no3','kh','ph','gh','temp'];
+/* A stored record is usable if its date is a string that cannot inject a formula or a row into
+   the iOS CSV export (no leading = + - @, no control characters). Non-ISO dates typed on old
+   browsers without a date picker are kept on purpose. Non-numeric readings and a non-string
+   note are nulled so no renderer, and not the iOS shell's strict decode, can fail on them.
+   Anything dropped is first backed up under a .corrupt- key. */
+const BAD_DATE = /^[=+\-@]|[\u0000-\u001f\u007f]/;
+const cleanTest = t => t && typeof t === 'object' && typeof t.date === 'string' && !BAD_DATE.test(t.date)
+  ? Object.fromEntries(Object.entries(t).map(([k, v]) => [k, (NUMERIC.includes(k) && !(typeof v === 'number' && isFinite(v))) || (k === 'note' && typeof v !== 'string') ? null : v])) : null;
+/* Backups are keyed by a hash + length of the raw string, so the same content is copied once
+   (a timestamp key wrote a new full copy on every app open and could fill the origin quota).
+   backupRaw is true when a copy of exactly `raw` exists afterwards. */
+const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36) + '-' + s.length; };
+const backupRaw = raw => { const k = STORE_NOW() + '.corrupt-' + hashStr(raw); try { if (storage.getItem(k) !== raw) storage.setItem(k, raw); return true } catch { return false } };
+/* True when every stored record survives load() unchanged in count, i.e. overwriting `raw`
+   cannot drop anything (unreadable JSON, or records load() would drop, count as not intact). */
+const intact = raw => { try { const v = JSON.parse(raw); return Array.isArray(v) && v.every(t => cleanTest(t)) } catch { return false } };
+const load = () => { try {
+  const raw = storage.getItem(STORE_NOW()), v = JSON.parse(raw);
+  if (!Array.isArray(v)) return null;
+  const ok = v.map(cleanTest).filter(Boolean);
+  if (ok.length !== v.length) backupRaw(raw);
+  return ok;
+} catch { return null } };
+/* Local calendar date (toISOString is UTC and gives the wrong day around midnight). */
+const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+/* A failed write (quota, storage revoked mid-session) must not break the UI: the session
+   keeps its in-memory `tests`, it just is not persisted. Stored tests that are unreadable, or
+   hold records load() drops, are never overwritten unless a backup of them exists: with a full
+   quota the backup fails but a shorter write over the original would still succeed and destroy
+   the only copy. */
+const save = (a) => { try {
+  const k = STORE_NOW(), cur = storage.getItem(k);
+  if (cur !== null && !intact(cur) && !backupRaw(cur)) return false;
+  storage.setItem(k, JSON.stringify(a)); return true } catch { return false } };
 let tests = load();
-if (!tests) { tests = SEED.slice(); save(tests); }
+if (!tests) { tests = []; save(tests); }   // fresh install, or unreadable data (save backs it up first)
 
 /* ---------- VERDICT ENGINE (the moat) ---------- */
 // returns {level:'good|warn|bad', tag, meaning, action}
@@ -56,7 +93,7 @@ const worst = (t)=>{ const v=verdictsFor(t); return v.length?v[0].level:'good'; 
 
 function renderVerdicts(t, el){
   const vs=verdictsFor(t);
-  el.innerHTML = `<h2>Verdict — ${t.date}</h2>` + vs.map(v=>`
+  el.innerHTML = `<h2>Verdict — ${esc(t.date)}</h2>` + vs.map(v=>`
     <div class="verdict ${v.level}">
       <div class="top"><span>${v.label}</span><span class="v">${v.tag}</span></div>
       <p>${v.meaning}</p>
@@ -65,14 +102,16 @@ function renderVerdicts(t, el){
 }
 
 /* ---------- HISTORY ---------- */
+const DOT_TEXT={good:'all readings fine',warn:'needs attention',bad:'action needed'};
 function renderHistory(){
   const el=document.getElementById('history');
   const sorted=[...tests].sort((a,b)=>b.date.localeCompare(a.date));
   el.innerHTML = sorted.map(t=>{
     const w=worst(t);
     const vals=['nh3','no2','no3','kh'].map(k=>t[k]!=null&&!isNaN(t[k])?`${k.toUpperCase()} ${t[k]}`:'').filter(Boolean).join(' · ');
-    return `<div class="h"><span class="d">${t.date}<span class="dot ${w}"></span></span><span class="vals">${vals}</span></div>`;
+    return `<div class="h"><span class="d">${esc(t.date)}<span class="dot ${w}" aria-hidden="true"></span><span class="sr-only"> — ${DOT_TEXT[w]}</span></span><span class="vals">${vals}</span></div>`;
   }).join('') || '<div class="empty">No tests yet.</div>';
+  if(!storagePersistent) el.insertAdjacentHTML('afterbegin','<div class="empty" role="status">Browser storage is blocked, so these readings will be lost when you close the page.</div>');
 }
 
 /* ---------- TRENDS (rate of change) ---------- */
@@ -97,17 +136,23 @@ function renderTrends(){
   } else html='<div class="empty">Log at least two tests to see trends.</div>';
   // KH watch
   const k=[...tests].filter(t=>t.kh!=null).sort((a,b)=>b.date.localeCompare(a.date))[0];
-  if(k){ const r=RULES.kh(k.kh); html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
+  const r=k&&RULES.kh(k.kh);
+  if(k&&r){ html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
   el.innerHTML=html;
   drawChart();
 }
 
+/* "2026-06-11" -> "11 Jun"; anything unparseable is shown as-is (drawn on canvas, so no escaping needed). */
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function shortDate(d){ const m=/^\d{4}-(\d{2})-(\d{2})/.exec(d); return m&&MONTHS[+m[1]-1]?`${+m[2]} ${MONTHS[+m[1]-1]}`:String(d); }
+/* Indices of the points that get a date label: first, last and up to two evenly spaced between. */
+function chartLabelIdx(n){ const k=Math.min(n,4); return [...new Set(Array.from({length:k},(_,j)=>Math.round(j*(n-1)/(k-1||1))))]; }
 function drawChart(){
   const c=document.getElementById('chart'); if(!c) return;
   const ctx=c.getContext('2d'); const W=c.width=c.clientWidth*devicePixelRatio, H=c.height=180*devicePixelRatio;
   ctx.clearRect(0,0,W,H); ctx.scale(1,1);
   const s=[...tests].sort((a,b)=>a.date.localeCompare(b.date));
-  if(s.length<2){ return; }
+  if(s.length<2){ c.setAttribute('aria-label','No chart yet: log at least two tests'); return; }
   const series={no3:'#22d3ee', kh:'#fbbf24'};
   const pad=24*devicePixelRatio;
   const xs=s.map((t,i)=> pad + i*(W-2*pad)/(s.length-1));
@@ -116,13 +161,20 @@ function drawChart(){
   const y=v=> H-pad - (v/max)*(H-2*pad);
   ctx.lineWidth=2*devicePixelRatio;
   for(const [k,col] of Object.entries(series)){
-    ctx.strokeStyle=col; ctx.beginPath(); let started=false;
+    ctx.strokeStyle=col; ctx.setLineDash(k==='kh'?[6*devicePixelRatio,4*devicePixelRatio]:[]); ctx.beginPath(); let started=false;
     s.forEach((t,i)=>{ if(t[k]==null||isNaN(t[k]))return; const X=xs[i],Y=y(t[k]); started?ctx.lineTo(X,Y):ctx.moveTo(X,Y); started=true;
       ctx.fillStyle=col; });
-    ctx.stroke();
+    ctx.stroke(); ctx.setLineDash([]);
     s.forEach((t,i)=>{ if(t[k]==null||isNaN(t[k]))return; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xs[i],y(t[k]),3*devicePixelRatio,0,7); ctx.fill(); });
   }
-  document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate</span><span><i style="background:#fbbf24"></i>KH buffer</span>';
+  // X axis: first / last (and up to two between) test dates, so the lines have a time scale.
+  ctx.fillStyle='#9aa4b2'; ctx.font=`${10*devicePixelRatio}px system-ui,sans-serif`;
+  for(const i of chartLabelIdx(s.length)){
+    ctx.textAlign = i===0 ? 'left' : i===s.length-1 ? 'right' : 'center';
+    ctx.fillText(shortDate(s[i].date), xs[i], H-6*devicePixelRatio);
+  }
+  c.setAttribute('aria-label',`Chart of nitrate and KH, ${s.length} tests from ${shortDate(s[0].date)} to ${shortDate(s[s.length-1].date)}`);
+  document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate (solid)</span><span><i class="dash" style="color:#fbbf24"></i>KH buffer (dashed)</span>';
 }
 
 /* ---------- FEEDING ---------- */
@@ -158,9 +210,12 @@ const PLAYBOOK=[
 ];
 function renderPlaybook(){
   document.getElementById('playbook').innerHTML = PLAYBOOK.map(p=>`
-    <details class="pb"><summary>${p.sym}<span>＋</span></summary>
+    <details class="pb"><summary>${p.sym}<span aria-hidden="true">＋</span></summary>
       <div class="body"><div class="first">First: ${p.first}</div><div class="then">Then: ${p.then}</div></div></details>`).join('');
 }
+
+/* Name of the tank the UI shows (registry entry of activeId). */
+const tankName=()=>(registry.tanks.find(x=>x.id===activeId)||registry.tanks[0]).name;
 
 /* ---------- HOLIDAY HANDOVER (no competitor does this) ---------- */
 function renderHandover(){
@@ -171,7 +226,7 @@ function renderHandover(){
   const el=document.getElementById('handover');
   el.innerHTML=`<div class="sheet" id="sheet">
     <h3>🐟 Tankmate handover — ${days} days${friend?` · for ${friend}`:''}</h3>
-    <p>Tank: <b>Fluval Flex 57 L</b>. Last water test ${last?last.date:'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
+    <p>Tank: <b>${esc(tankName())}</b>. Last water test ${last?esc(last.date):'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
     <div class="box"><b>Every day — morning only</b><ul>
       <li>One 3-finger pinch of the granules in the labelled pot. That's it for the day.</li>
       <li>Glance: are the fish swimming normally? Is the water clear? Is the light on its timer?</li>
@@ -185,35 +240,157 @@ function renderHandover(){
     <p style="font-size:12px;color:#555">Generated by Tankmate. Print this and tape it by the tank.</p>
     <button class="print" onclick="window.print()">🖨️ Print / Save as PDF</button>
   </div>`;
+  // Keyboard / screen-reader users: land on the new sheet instead of staying on the button above it.
+  const hd=el.querySelector('h3'); if(hd){ hd.tabIndex=-1; hd.focus(); }
 }
 
 /* ---------- form + tabs + wiring ---------- */
-document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+/* The date field's max and default track the CURRENT day: an installed PWA is resumed from memory
+   for days, and a max frozen at startup made today's date invalid (the browser then blocks the
+   submit). On resume an untouched default moves to the new day; a date the user picked stays. */
+let dateDefault='';
+function setDateDefault(){ const f=document.getElementById('f-date'); f.max=today(); f.value=dateDefault=today(); }
+function refreshDate(){ const f=document.getElementById('f-date'); const keep=f.value!==dateDefault; f.max=today(); if(!keep) f.value=dateDefault=today(); }
+setDateDefault();
+document.addEventListener('visibilitychange',()=>{ if(document.visibilityState==='visible') refreshDate(); });
 document.getElementById('testform').addEventListener('submit',e=>{
   e.preventDefault();
   const g=id=>{const v=document.getElementById(id).value; return v===''?null:+v;};
-  const t={date:document.getElementById('f-date').value||new Date().toISOString().slice(0,10),
+  const t={date:document.getElementById('f-date').value||today(),
     nh3:g('f-nh3'),no2:g('f-no2'),no3:g('f-no3'),kh:g('f-kh'),ph:g('f-ph'),gh:g('f-gh'),temp:g('f-temp'),
     note:document.getElementById('f-note').value.trim()};
-  tests.push(t); save(tests);
+  // Same rule as load(): a date it would drop (typed on a browser without a date picker) is
+  // refused here, with the form kept, instead of being shown now and silently lost on reload.
+  if(!cleanTest(t)){ document.getElementById('verdicts').innerHTML='<div class="empty" role="alert">That date cannot be saved. Pick it with the date picker or type it as YYYY-MM-DD.</div>'; return; }
+  tests = load() || tests;   // another window may have saved since startup: merge, don't clobber
+  tests.push(t);
+  const saved = save(tests);
+  nudgeAfterSave();
   renderVerdicts(t, document.getElementById('verdicts'));
   renderHistory(); renderTrends();
-  document.getElementById('verdicts').scrollIntoView({behavior:'smooth',block:'start'});
-  e.target.reset(); document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  if(!saved) document.getElementById('verdicts').insertAdjacentHTML('afterbegin','<div class="empty" role="alert">Could not save this reading (browser storage is full or blocked). It is shown here but will be lost on reload.</div>');
+  document.getElementById('verdicts').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'});
+  e.target.reset(); setDateDefault();
 });
 
 function show(tab){
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tab));
-  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tabbar button').forEach(b=>{b.classList.toggle('active',b.dataset.tab===tab); if(b.dataset.tab===tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');});
   if(tab==='trends')drawChart();
+  // Keep focus on the tab button (so keyboard users keep their place in the bar) and
+  // announce the new section to screen readers instead.
+  const h=document.querySelector('#tab-'+tab+' h1');
+  const a=document.getElementById('tabannounce');
+  if(h&&a) a.textContent=h.textContent;
+  window.scrollTo(0,0);
 }
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
 document.getElementById('h-gen').onclick=renderHandover;
 
+function repaint(){
+  renderHistory(); renderTrends();
+  const v=document.getElementById('verdicts');
+  if(tests.length) renderVerdicts([...tests].sort((a,b)=>b.date.localeCompare(a.date))[0], v); else v.innerHTML='';
+  renderTankName();
+}
+
+/* ---------- tank switcher + native bridge hooks ---------- */
+function renderTankName(){
+  const el=document.getElementById('tankname');
+  const t=registry.tanks.find(x=>x.id===activeId)||registry.tanks[0];
+  if(!window.tankmateNativeShell){ el.textContent=t.name; return; }   // PWA: plain label
+  const opts=registry.tanks.filter(x=>isPro||x.id===TankStore.DEFAULT_ID)
+    .map(x=>`<option value="${esc(x.id)}"${x.id===activeId?' selected':''}>${esc(x.name)}</option>`).join('');
+  el.innerHTML=`<select id="tankswitch" aria-label="Tank">${opts}<option value="__add">＋ Add tank${isPro?'':' (Pro)'}</option></select>`;
+  document.getElementById('tankswitch').onchange=(e)=>{
+    const v=e.target.value;
+    if(v==='__add'){ e.target.value=activeId; window.webkit.messageHandlers.tankmate.postMessage({action:'addTank',tankCount:registry.tanks.length}); }
+    else tankmateSwitch(v);
+  };
+}
+function tankmateSwitch(id){
+  registry=TankStore.setActive(storage,id); activeId=TankStore.effectiveActive(registry,isPro);
+  tests=load()||[]; resetEntryForm(); repaint();
+}
+// Readings typed for one tank must never be saved into another: clear the form on every tank change.
+function resetEntryForm(){
+  const f=document.getElementById('testform'); if(!f) return;
+  f.reset(); setDateDefault();
+}
+// Called by the native shell. Pro state is pushed in; it is never read back from storage.
+window.tankmateApplyNative=function(o){
+  window.tankmateNativeShell=true; isPro=!!(o&&o.isPro);
+  const prev=activeId;
+  activeId=TankStore.effectiveActive(registry,isPro);
+  tests=load()||[]; if(activeId!==prev) resetEntryForm(); repaint();
+};
+// Native has already checked the entitlement before calling this.
+window.tankmateAddTank=function(name){
+  try{ TankStore.addTank(storage,name); }catch(e){ return false; }
+  registry=TankStore.ensureRegistry(storage); activeId=TankStore.effectiveActive(registry,isPro);
+  tests=load()||[]; resetEntryForm(); repaint(); return true;
+};
+// Snapshot for the native charts / reminders sheets.
+window.tankmateState=function(){
+  const t=registry.tanks.find(x=>x.id===activeId);
+  return {active:{id:activeId,name:t?t.name:''},tanks:registry.tanks,tests:tests};
+};
+
 // initial paint
-renderHistory(); renderTrends(); renderFeeding(); renderPlaybook();
-if(tests.length) renderVerdicts([...tests].sort((a,b)=>b.date.localeCompare(a.date))[0], document.getElementById('verdicts'));
-window.addEventListener('resize',drawChart);
+repaint(); renderFeeding(); renderPlaybook();
+// Redraw at most once per frame, and only while the chart is visible.
+let resizeQueued=false;
+window.addEventListener('resize',()=>{
+  if(resizeQueued) return;
+  resizeQueued=true;
+  requestAnimationFrame(()=>{ resizeQueued=false; if(document.getElementById('tab-trends').classList.contains('active')) drawChart(); });
+});
 
 // PWA
 if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+
+/* ---------- INSTALL NUDGE (nudge.js, task 4659) ----------
+   A dismissible bar shown only after the user's first saved test. Chromium: captures
+   beforeinstallprompt and offers a one-tap install. iOS Safari: one-line manual hint.
+   Everything stays on the device: two localStorage flags, nothing is sent anywhere. */
+(function(){
+  if (typeof InstallNudge === 'undefined') return;           // not bundled (e.g. native shell)
+  const N = InstallNudge;
+  const lsGet = k => { try { return localStorage.getItem(k) } catch { return null } };
+  const lsSet = k => { try { localStorage.setItem(k, '1') } catch {} };
+  let deferred = null;
+  const standalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+  const state = () => ({
+    savedTests: lsGet(N.FLAG_SAVED) ? 1 : 0, standalone: standalone(), dismissed: !!lsGet(N.FLAG_DISMISSED),
+    native: window.tankmateNativeShell === true,
+    canPrompt: !!deferred, ios: N.isIosSafari(navigator.userAgent, navigator.maxTouchPoints || 0)
+  });
+  function render(){
+    const bar = document.getElementById('installnudge'); if (!bar) return;
+    const mode = N.nudgeMode(state());
+    bar.hidden = !mode;
+    document.body.classList.toggle('has-nudge', !!mode); // extra bottom padding so the bar never covers content
+    if (!mode) return;
+    document.getElementById('nudge-text').textContent = mode === 'ios'
+      ? 'Keep Tankmate on your home screen: tap Share, then Add to Home Screen.'
+      : 'Keep Tankmate on your home screen for one-tap tests.';
+    document.getElementById('nudge-install').hidden = mode !== 'prompt';
+  }
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); deferred = e; render(); });
+  window.addEventListener('appinstalled', () => { deferred = null; render(); });
+  const bar = document.getElementById('installnudge');
+  if (bar) {
+    document.getElementById('nudge-close').onclick = () => { lsSet(N.FLAG_DISMISSED); render(); };
+    document.getElementById('nudge-install').onclick = async () => {
+      if (!deferred) return;
+      deferred.prompt(); try { await deferred.userChoice } catch {}
+      deferred = null; render();
+    };
+  }
+  // The seed history is not the user's own: count only tests saved through the form.
+  window.tankmateNudgeSaved = () => { lsSet(N.FLAG_SAVED); render(); };
+  render();
+})();
+/* Distinct hook name: this global function declaration is itself window.nudgeAfterSave, so reusing
+   that name recursed forever when nudge.js is absent (iOS bundle, task 5024). */
+function nudgeAfterSave(){ if (typeof window.tankmateNudgeSaved === 'function') window.tankmateNudgeSaved(); }
