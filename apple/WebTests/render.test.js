@@ -78,7 +78,7 @@ test('renderHandover escapes the last test date', () => {
 test('load(): drops records without a string date, nulls non-numeric readings, backs up the raw string', () => {
   const store = new Map([['k', JSON.stringify([{ date: '2026-01-01', kh: 'abc', no3: 10 }, { date: 5 }, null])]]);
   const c = vm.createContext({ storage: { getItem: k => store.has(k) ? store.get(k) : null, setItem: (k, v) => store.set(k, v) }, STORE_NOW: () => 'k', Date });
-  vm.runInContext(line('const NUMERIC') + '\n' + line('const hashStr') + '\n' + line('const backupRaw') + '\n' + line('const cleanTest') .replace(/$/, '') + '\n' + src.slice(src.indexOf('  ? Object.fromEntries'), src.indexOf('\n', src.indexOf('  ? Object.fromEntries'))) + '\n' + block('const load'), c);
+  vm.runInContext(line('const NUMERIC') + '\n' + line('const BAD_DATE') + '\n' + line('const hashStr') + '\n' + line('const backupRaw') + '\n' + line('const cleanTest') .replace(/$/, '') + '\n' + src.slice(src.indexOf('  ? Object.fromEntries'), src.indexOf('\n', src.indexOf('  ? Object.fromEntries'))) + '\n' + block('const load'), c);
   const out = vm.runInContext('load()', c);
   assert.equal(out.length, 1);
   assert.equal(out[0].kh, null);

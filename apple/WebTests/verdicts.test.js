@@ -77,7 +77,7 @@ function loadWith(raw) {
   const store = new Map(raw === undefined ? [] : [['k', raw]]);
   const storage = { getItem: (k) => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)) };
   const c = vm.createContext({ storage, STORE_NOW: () => 'k', JSON, Date, Array, Object, Number, isFinite });
-  vm.runInContext([line('const NUMERIC'), between('const cleanTest', 'const load'), between('const load', '/* Local calendar date')].join('\n') + '\nthis.load=load;', c);
+  vm.runInContext([line('const NUMERIC'), line('const BAD_DATE'), between('const cleanTest', 'const load'), between('const load', '/* Local calendar date')].join('\n') + '\nthis.load=load;', c);
   return { result: c.load(), store };
 }
 

@@ -18,10 +18,14 @@ let registry = TankStore.ensureRegistry(storage, document.getElementById('tankna
 let activeId = TankStore.effectiveActive(registry, isPro);
 const STORE_NOW = () => TankStore.testsKey(activeId);
 const NUMERIC = ['nh3','no2','no3','kh','ph','gh','temp'];
-/* A stored record is usable if it has a string date; non-numeric readings are nulled so no
-   renderer can throw on them. Anything dropped is first backed up under a .corrupt- key. */
-const cleanTest = t => t && typeof t === 'object' && typeof t.date === 'string'
-  ? Object.fromEntries(Object.entries(t).map(([k, v]) => [k, NUMERIC.includes(k) && !(typeof v === 'number' && isFinite(v)) ? null : v])) : null;
+/* A stored record is usable if its date is a string that cannot inject a formula or a row into
+   the iOS CSV export (no leading = + - @, no control characters). Non-ISO dates typed on old
+   browsers without a date picker are kept on purpose. Non-numeric readings and a non-string
+   note are nulled so no renderer, and not the iOS shell's strict decode, can fail on them.
+   Anything dropped is first backed up under a .corrupt- key. */
+const BAD_DATE = /^[=+\-@]|[\u0000-\u001f\u007f]/;
+const cleanTest = t => t && typeof t === 'object' && typeof t.date === 'string' && !BAD_DATE.test(t.date)
+  ? Object.fromEntries(Object.entries(t).map(([k, v]) => [k, (NUMERIC.includes(k) && !(typeof v === 'number' && isFinite(v))) || (k === 'note' && typeof v !== 'string') ? null : v])) : null;
 /* Backups are keyed by a hash + length of the raw string, so the same content is copied once
    (a timestamp key wrote a new full copy on every app open and could fill the origin quota).
    backupRaw is true when a copy of exactly `raw` exists afterwards. */
