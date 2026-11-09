@@ -80,10 +80,10 @@ function renderTrends(){
   const el=document.getElementById('trend-cards');
   const s=[...tests].filter(t=>t.no3!=null).sort((a,b)=>a.date.localeCompare(b.date));
   let html='';
-  if(s.length>=2){
-    const a=s[s.length-2], b=s[s.length-1];
-    const days=Math.max(1,(new Date(b.date)-new Date(a.date))/864e5);
-    const rate=((b.no3-a.no3)/days*7).toFixed(1);
+  const pair=nitrateInterval(s);
+  if(pair){
+    const [a,b]=pair;
+    const rate=nitrateRatePerWeek(a,b).toFixed(1);
     const rising=rate>0;
     const lvl = rate>10 ? 'bad' : rate>5 ? 'warn' : 'good';
     html += `<div class="card ${lvl==='good'?'':''}"><div class="trend">
@@ -94,12 +94,32 @@ function renderTrends(){
         rising?'Gentle, normal accumulation. Weekly changes are keeping up.':
         'Flat or falling — your maintenance is winning.'}</small></div>
     </div></div>`;
-  } else html='<div class="empty">Log at least two tests to see trends.</div>';
+  } else html='<div class="empty">Log at least two tests on different days to see trends.</div>';
   // KH watch
   const k=[...tests].filter(t=>t.kh!=null).sort((a,b)=>b.date.localeCompare(a.date))[0];
   if(k){ const r=RULES.kh(k.kh); html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
   el.innerHTML=html;
   drawChart();
+}
+
+/* ---------- calculation helpers (pure, unit-tested in tests/calc.test.js) ---------- */
+// Whole days between two ISO dates. Date-only strings parse as UTC midnight
+// (ECMA-262 date-time string format), so DST changes never add or drop an hour.
+const daysBetween=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+// Latest nitrate reading vs the most recent one from an EARLIER day. A same-day
+// retest is not a trend: dividing by a clamped 1 day turned a 10→20 retest into
+// "+70 ppm/week". s must be sorted by date ascending. Returns [a,b] or null.
+function nitrateInterval(s){
+  const b=s[s.length-1]; if(!b) return null;
+  for(let i=s.length-2;i>=0;i--) if(daysBetween(s[i].date,b.date)>=1) return [s[i],b];
+  return null;
+}
+const nitrateRatePerWeek=(a,b)=>(b.no3-a.no3)/daysBetween(a.date,b.date)*7;
+// Chart x positions proportional to elapsed time, not to the test's index:
+// a 5-month gap and a 12-day gap must not look the same width.
+function chartXs(dates,W,pad){
+  const t=dates.map(d=>Date.parse(d)), t0=t[0], span=t[t.length-1]-t0;
+  return t.map((v,i)=> pad + (span>0 ? (v-t0)/span : (dates.length>1 ? i/(dates.length-1) : 0))*(W-2*pad));
 }
 
 function drawChart(){
@@ -110,7 +130,7 @@ function drawChart(){
   if(s.length<2){ return; }
   const series={no3:'#22d3ee', kh:'#fbbf24'};
   const pad=24*devicePixelRatio;
-  const xs=s.map((t,i)=> pad + i*(W-2*pad)/(s.length-1));
+  const xs=chartXs(s.map(t=>t.date),W,pad);
   const all=s.flatMap(t=>[t.no3,t.kh]).filter(v=>v!=null&&!isNaN(v));
   const max=Math.max(20,...all)*1.15;
   const y=v=> H-pad - (v/max)*(H-2*pad);
@@ -122,7 +142,7 @@ function drawChart(){
     ctx.stroke();
     s.forEach((t,i)=>{ if(t[k]==null||isNaN(t[k]))return; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xs[i],y(t[k]),3*devicePixelRatio,0,7); ctx.fill(); });
   }
-  document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate</span><span><i style="background:#fbbf24"></i>KH buffer</span>';
+  document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate (ppm)</span><span><i style="background:#fbbf24"></i>KH buffer (dKH)</span>';
 }
 
 /* ---------- FEEDING ---------- */
