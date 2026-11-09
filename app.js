@@ -31,7 +31,9 @@ const cleanTest = t => t && typeof t === 'object' && typeof t.date === 'string' 
    backupRaw is true when a copy of exactly `raw` exists afterwards. */
 const hashStr = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0; return h.toString(36) + '-' + s.length; };
 const backupRaw = raw => { const k = STORE_NOW() + '.corrupt-' + hashStr(raw); try { if (storage.getItem(k) !== raw) storage.setItem(k, raw); return true } catch { return false } };
-const readable = raw => { try { return Array.isArray(JSON.parse(raw)) } catch { return false } };
+/* True when every stored record survives load() unchanged in count, i.e. overwriting `raw`
+   cannot drop anything (unreadable JSON, or records load() would drop, count as not intact). */
+const intact = raw => { try { const v = JSON.parse(raw); return Array.isArray(v) && v.every(t => cleanTest(t)) } catch { return false } };
 const load = () => { try {
   const raw = storage.getItem(STORE_NOW()), v = JSON.parse(raw);
   if (!Array.isArray(v)) return null;
@@ -42,12 +44,13 @@ const load = () => { try {
 /* Local calendar date (toISOString is UTC and gives the wrong day around midnight). */
 const today = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
 /* A failed write (quota, storage revoked mid-session) must not break the UI: the session
-   keeps its in-memory `tests`, it just is not persisted. Stored tests that cannot be read are
-   never overwritten unless a backup of them exists: with a full quota the backup fails but a
-   shorter "[]" over the original would still succeed and destroy the only copy. */
+   keeps its in-memory `tests`, it just is not persisted. Stored tests that are unreadable, or
+   hold records load() drops, are never overwritten unless a backup of them exists: with a full
+   quota the backup fails but a shorter write over the original would still succeed and destroy
+   the only copy. */
 const save = (a) => { try {
   const k = STORE_NOW(), cur = storage.getItem(k);
-  if (cur !== null && !readable(cur) && !backupRaw(cur)) return false;
+  if (cur !== null && !intact(cur) && !backupRaw(cur)) return false;
   storage.setItem(k, JSON.stringify(a)); return true } catch { return false } };
 let tests = load();
 if (!tests) { tests = []; save(tests); }   // fresh install, or unreadable data (save backs it up first)

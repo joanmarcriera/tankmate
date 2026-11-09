@@ -39,3 +39,13 @@ test('unreadable tests with room to spare: backed up, then the app starts empty'
   assert.equal(backups(store).length, 1);
   assert.equal(store.getItem(backups(store)[0]), raw);
 });
+
+// Second review (sonnet): load() dropped a bad record, its backup failed on a full quota, and
+// the next save wrote the cleaned (smaller) array: the dropped record was gone with no copy.
+test('a dropped record is never lost: no save while its backup cannot be written', () => {
+  const raw = JSON.stringify([{ date: '2026-01-01', no3: 10 }, { date: '=x', no3: 99, note: 'y'.repeat(300) }]);
+  const store = new FakeStorage({ [KEY]: raw }, { quota: KEY.length + raw.length + 5 });
+  const app = boot({ storage: store });
+  app.submit({ 'f-no3': '1' });
+  assert.ok([...store.m.values()].includes(raw), 'the dropped record was destroyed without a backup');
+});
