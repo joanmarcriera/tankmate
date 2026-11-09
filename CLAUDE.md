@@ -2,14 +2,14 @@
 
 **Purpose:** Local-first Progressive Web App (PWA) for freshwater aquarium maintenance. Logs water tests and returns verdicts + actionable judgements, not just stored numbers. The moat is domain-encoded rules; the business model is free tier + paid features (multi-tank, photo timeline, cloud sync, local LLM advisor, Home Assistant bridge).
 
-**Status:** Live MVP (shipped 2026-06-24, deployed to joanmarcriera.es via Hetzner rsync CI/CD). Seeded with Marc's real Fluval Flex 57 L data.
+**Status:** Live MVP (shipped 2026-06-24, deployed to https://tankmate.joanmarcriera.es/ via Hetzner rsync CI/CD; iOS shell in `apple/`, not yet submitted). Seeded with Marc's real Fluval Flex 57 L data.
 
 ---
 
 ## How to run locally
 
 ```bash
-cd /Users/marc/Development/Project/tankmate
+cd tankmate   # the repo root
 python3 -m http.server 8765
 open http://localhost:8765
 ```
@@ -24,13 +24,17 @@ No build step needed — all files are served directly.
 
 ```
 tankmate/
-├── app.js                    # Verdict engine + all UI logic (219 lines, no deps)
+├── app.js                    # Verdict engine + all UI logic (~220 lines, no deps)
 ├── index.html               # HTML structure: 5 tabs (Log, Trends, Feed, Playbook, Holiday)
 ├── styles.css               # Dark theme, color-coded verdicts (good/warn/bad)
 ├── sw.js                    # Service worker: offline cache, falls back to index.html
 ├── manifest.webmanifest     # PWA metadata (name, icon, display:standalone)
+├── privacy/index.html       # Privacy policy (App Store privacy URL)
+├── support/index.html       # Support + FAQ (App Store support URL)
 ├── icon.svg                 # Single SVG icon (any-sized + maskable)
 ├── README.md                # Product narrative + deployment paths
+├── HANDOFF-*.md             # Session handoffs (not deployed)
+├── apple/                   # iOS SwiftUI + WKWebView shell (see apple/README.md; not deployed)
 └── .github/workflows/deploy.yml  # GitHub Actions → rsync to Hetzner
 ```
 
@@ -38,7 +42,7 @@ tankmate/
 
 ## Core logic
 
-### Verdict Engine (app.js lines 23–45)
+### Verdict Engine (`RULES` in app.js, from line 23)
 
 Each parameter (NH₃, NO₂, NO₃, KH, pH, GH, temp) is evaluated by a rule function returning `{level, tag, meaning, action}`. Levels are ordered `bad → warn → good` on render.
 
@@ -49,7 +53,8 @@ Rules are encoded from real freshwater chemistry + Marc's experience. Edit `RULE
 ### Data Model
 
 ```js
-const STORE = 'tankmate.tests.v1';  // localStorage key
+const STORE = 'tankmate.tests.v1';  // localStorage key — the only key the app writes
+const TANK = 'tankmate.tank.v1';    // declared but not used yet (tank name is hardcoded in index.html)
 const SEED = [...];  // initial data (Marc's Fluval Flex history)
 
 // A test record:
@@ -75,7 +80,7 @@ Tests are appended to array, persisted to localStorage on every save. SEED popul
 ## Conventions
 
 - **No build, no dependencies, no node_modules.** Static HTML/CSS/JS, service worker registration is inline.
-- **XSS safe:** HTML escaping via `esc()` function (line 15).
+- **XSS safe:** HTML escaping via the `esc()` helper near the top of app.js.
 - **Responsive:** `max-width: 680px`, mobile-first, `env(safe-area-inset-bottom)` for notch/home bar.
 - **Fixed bottom nav:** 5 icon tabs, `position: fixed; bottom: 0`. Scroll room added via `padding-bottom: 74px` on body.
 - **Color coded:** `--good` (green), `--warn` (amber), `--bad` (red) CSS tokens. Dark theme root, no light-mode variant.
@@ -88,25 +93,25 @@ Tests are appended to array, persisted to localStorage on every save. SEED popul
 
 **Local → live:** Push to `main` branch → GitHub Actions `deploy.yml` → rsync to `deploy@joanmarcriera.es:/opt/stacks/core/tankmate/`. SSH key secret: `DEPLOY_SSH_KEY`.
 
-Files deployed as-is (no build). Served by nginx on Hetzner VPS, behind Traefik + Let's Encrypt.
+Files deployed as-is (no build); rsync `--delete` excludes `.git`, `.github`, `apple/` and `*.md`. Served by nginx on Hetzner VPS, behind Traefik + Let's Encrypt.
 
 ---
 
 ## Gotchas & notes
 
-1. **Service worker cache key:** Line 2 of `sw.js` is `VERSION = 'tankmate-v1'`. Bump it to invalidate caches (e.g. on CSS/JS updates).
+1. **Service worker cache key:** the `VERSION` constant on line 2 of `sw.js`. Bump it to invalidate caches (e.g. on CSS/JS updates).
 
 2. **localStorage scope:** Data is per-origin. If deployed to a new URL, users won't see their old tests. Consider export/import for multi-tank feature later.
 
 3. **Chart memory:** Canvas redraws on every tab switch to Trends. No memoization — acceptable for <100 tests; revisit if it grows.
 
-4. **Playbook is hardcoded:** `PLAYBOOK` array (line 151) has no UI to add new cards; edit the array to add emergency scenarios.
+4. **Playbook is hardcoded:** `PLAYBOOK` array has no UI to add new cards; edit the array to add emergency scenarios.
 
-5. **Feeding rotation is hardcoded:** `ROTATION` array (line 129) is Marc's real schedule. Multi-tank feature will need customizable schedules.
+5. **Feeding rotation is hardcoded:** `ROTATION` array is Marc's real schedule. Multi-tank feature will need customizable schedules.
 
 6. **No validation on test form:** Accepts null or NaN for any parameter; verdict engine skips null/NaN safely. User can submit an empty form.
 
-7. **Holiday handover generates white paper:** Printed with `@media print` styles (sheet.css line 47). Recommend PDF save via browser print dialog.
+7. **Holiday handover is a white `.sheet` card** (styles.css). There are no `@media print` rules yet, so `window.print()` prints the whole page including the tab bar; recommend PDF save via the browser print dialog.
 
 8. **Icon is SVG:** Single vector icon used at all sizes via manifest `"sizes": "any"` + `"purpose": "maskable"`. OS may apply background on maskable icon, so test on iOS.
 
@@ -114,10 +119,11 @@ Files deployed as-is (no build). Served by nginx on Hetzner VPS, behind Traefik 
 
 ## Quick edits
 
-- **Change verdicts:** Edit `RULES` object (app.js:23–44).
-- **Change feeding schedule:** Edit `ROTATION` array (app.js:129–137).
-- **Add emergency cards:** Add to `PLAYBOOK` array (app.js:151–158).
-- **Tweak colors:** Edit CSS tokens in `:root` (styles.css:1–4).
+- **Change verdicts:** Edit the `RULES` object in app.js.
+- **Change feeding schedule:** Edit the `ROTATION` array in app.js.
+- **Add emergency cards:** Add to the `PLAYBOOK` array in app.js.
+- **Tweak colors:** Edit CSS tokens in `:root` (top of styles.css).
+- **Privacy / support copy:** `privacy/index.html`, `support/index.html`. Every statement in the privacy page must stay true; if the app starts storing or sending anything new, update it, its "Last updated" date, and `apple/Resources/PrivacyInfo.xcprivacy`.
 - **Update app name/description:** Edit manifest (manifest.webmanifest:2–4).
 
 ---
