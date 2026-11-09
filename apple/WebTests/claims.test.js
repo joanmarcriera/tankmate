@@ -43,3 +43,10 @@ test('coffee link is the live-mode checkout, opened as a plain link', () => {
   assert.ok(html.includes('/checkout/buy/5fbc35a0-bd77-470f-8e9b-e184199a3f4f"'), 'live product link');
   assert.ok(!html.includes('b6678503-277f-4679-81ec-1018a8c4cc12'), 'test-mode product link');
 });
+
+// Second review (sonnet): ProStore loads the product and entitlements on every launch, so
+// "only contacts the App Store if you buy or restore" was not true either.
+test('support page does not say the App Store is contacted only on buy/restore', () => {
+  assert.doesNotMatch(text('support/index.html'), /only contacts Apple's App Store if you buy/i);
+  assert.match(text('support/index.html'), /check whether your subscription is active/);
+});
