@@ -29,6 +29,10 @@ on:
         description: "CFBundleVersion override (default: the run number)"
         required: false
 
+# Least privilege: the job only reads the repo (no releases, tags or comments).
+permissions:
+  contents: read
+
 concurrency:
   group: release-appstore-ios
   cancel-in-progress: false
@@ -101,17 +105,6 @@ jobs:
             exit 1
           fi
           echo "SIGNING_IDENTITY=$identity" >> "$GITHUB_ENV"
-
-      - name: Install App Store Connect API key
-        timeout-minutes: 3
-        env:
-          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
-        run: |
-          set -euo pipefail
-          # altool and xcodebuild look here; -authenticationKeyPath is not reliable.
-          mkdir -p "$HOME/.appstoreconnect/private_keys"
-          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
-            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
 
       # Validate the profile BEFORE the 20-minute archive: wrong team, wrong app
       # id, or a development profile are the usual first-run failures.
@@ -211,6 +204,20 @@ jobs:
           [[ -n "$ipa" ]] || { echo "::error::Export produced no .ipa"; find build/export -print; exit 1; }
           unzip -l "$ipa" | grep -q 'embedded.mobileprovision' || { echo "::error::.ipa has no embedded.mobileprovision"; exit 1; }
           echo "Exported $ipa"
+
+      # Installed only now, after archive and export: the project build scripts
+      # (prepare-web-bundle.py and the other postBuildScripts) run during the archive and
+      # need no App Store Connect key, so they never get to read it.
+      - name: Install App Store Connect API key
+        timeout-minutes: 3
+        env:
+          ASC_API_KEY_P8_BASE64: ${{ secrets.ASC_API_KEY_P8_BASE64 }}
+        run: |
+          set -euo pipefail
+          # altool and xcodebuild look here; -authenticationKeyPath is not reliable.
+          mkdir -p "$HOME/.appstoreconnect/private_keys"
+          echo "$ASC_API_KEY_P8_BASE64" | base64 --decode \
+            > "$HOME/.appstoreconnect/private_keys/AuthKey_${ASC_API_KEY_ID}.p8"
 
       - name: Upload to App Store Connect
         timeout-minutes: 10
