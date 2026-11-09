@@ -13,13 +13,39 @@ const SEED = [
 ];
 
 const esc = (s) => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const load = () => { try { return JSON.parse(localStorage.getItem(STORE)) || null } catch { return null } };
-const save = (a) => localStorage.setItem(STORE, JSON.stringify(a));
+// Local calendar date as YYYY-MM-DD. toISOString() is UTC, which logs the wrong
+// day near midnight anywhere that is not on UTC.
+const localDate = (d = new Date()) =>
+  `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+// Returns the stored array, or null when nothing is stored. Unreadable or
+// non-array data is copied to a backup key first, so re-seeding can never
+// silently destroy the only copy of a user's history.
+const load = () => {
+  let raw = null;
+  try { raw = localStorage.getItem(STORE); } catch (err) { console.warn('Tankmate: storage unavailable', err); return null; }
+  if (raw == null) return null;
+  try { const a = JSON.parse(raw); if (Array.isArray(a)) return a.filter(t => t && typeof t === 'object' && typeof t.date === 'string'); } catch {}
+  console.warn('Tankmate: stored tests were unreadable; kept a copy under', STORE + '.corrupt');
+  try { localStorage.setItem(STORE + '.corrupt', raw); } catch {}
+  return null;
+};
+// Returns false when the browser refuses the write (quota, private mode).
+const save = (a) => { try { localStorage.setItem(STORE, JSON.stringify(a)); return true; } catch (err) { console.error('Tankmate: could not save tests', err); return false; } };
 let tests = load();
 if (!tests) { tests = SEED.slice(); save(tests); }
 
 /* ---------- VERDICT ENGINE (the moat) ---------- */
 // returns {level:'good|warn|bad', tag, meaning, action}
+// A reading is "missing" (skipped) when absent or not a number. Stored values
+// are coerced, so a hand-edited or imported "0" is read as 0 and not as toxic.
+const num = (v) => { if (v == null || v === '') return null; const n = Number(v); return Number.isNaN(n) ? null : n; };
+// Physically impossible readings get a "check the entry" verdict instead of a
+// confident judgement (e.g. a negative ammonia reading is not "toxic").
+const RANGE = { nh3:[0,100], no2:[0,100], no3:[0,1000], kh:[0,50], ph:[0,14], gh:[0,100], temp:[0,45] };
+const UNIT = { nh3:'ppm', no2:'ppm', no3:'ppm', kh:'dKH', ph:'', gh:'dGH', temp:'°C' };
+const invalid = (k, v) => ({ level:'warn', tag: `${v}${UNIT[k] ? ' ' + UNIT[k] : ''} — check reading`,
+  meaning: `That value is outside what this test can read (${RANGE[k][0]}–${RANGE[k][1]}${UNIT[k] ? ' ' + UNIT[k] : ''}). Likely a typo or a different unit.`,
+  action: 'Re-check the kit and units, then log the test again.' });
 const RULES = {
   nh3(v){ if(v==null||isNaN(v)) return null;
     if(v===0) return {level:'good',tag:'0 — perfect',meaning:'Filter bacteria are processing all fish waste. Zero is the only acceptable number.'};
@@ -45,9 +71,14 @@ const RULES = {
 };
 const LABEL = {nh3:'NH₃ ammonia',no2:'NO₂ nitrite',no3:'NO₃ nitrate',kh:'KH buffer',ph:'pH',gh:'GH',temp:'Temperature'};
 
+const valid = (k, raw) => { const v = num(raw); return v != null && Number.isFinite(v) && v >= RANGE[k][0] && v <= RANGE[k][1]; };
+function verdict(k, raw){
+  const v = num(raw); if (v == null || !RULES[k]) return null;
+  return valid(k, v) ? RULES[k](v) : invalid(k, v);
+}
 function verdictsFor(t){
   const order=['nh3','no2','no3','kh','ph','gh','temp'], out=[];
-  for(const k of order){ const r=RULES[k]?.(t[k]); if(r){ r.key=k; r.label=LABEL[k]; out.push(r); } }
+  for(const k of order){ const r=verdict(k, t[k]); if(r){ r.key=k; r.label=LABEL[k]; out.push(r); } }
   // worst-first so the dangerous thing is on top
   const rank={bad:0,warn:1,good:2};
   return out.sort((a,b)=>rank[a.level]-rank[b.level]);
@@ -56,9 +87,9 @@ const worst = (t)=>{ const v=verdictsFor(t); return v.length?v[0].level:'good'; 
 
 function renderVerdicts(t, el){
   const vs=verdictsFor(t);
-  el.innerHTML = `<h2>Verdict — ${t.date}</h2>` + vs.map(v=>`
+  el.innerHTML = `<h2>Verdict — ${esc(t.date)}</h2>` + vs.map(v=>`
     <div class="verdict ${v.level}">
-      <div class="top"><span>${v.label}</span><span class="v">${v.tag}</span></div>
+      <div class="top"><span>${v.label}</span><span class="v">${esc(v.tag)}</span></div>
       <p>${v.meaning}</p>
       ${v.action?`<div class="act">→ <b>${v.action}</b></div>`:''}
     </div>`).join('');
@@ -74,20 +105,22 @@ function renderHistory(){
   const sorted=[...tests].sort((a,b)=>b.date.localeCompare(a.date));
   el.innerHTML = sorted.map(t=>{
     const w=worst(t);
-    const vals=['nh3','no2','no3','kh'].map(k=>t[k]!=null&&!isNaN(t[k])?`${k.toUpperCase()} ${t[k]}`:'').filter(Boolean).join(' · ');
-    return `<div class="h"><span class="d">${t.date}<span class="dot ${w}" aria-hidden="true"></span><span class="sr-only">${LEVEL_TEXT[w]}</span></span><span class="vals">${vals}</span></div>`;
+    const vals=['nh3','no2','no3','kh'].map(k=>num(t[k])!=null?`${k.toUpperCase()} ${esc(num(t[k]))}`:'').filter(Boolean).join(' · ');
+    return `<div class="h"><span class="d">${esc(t.date)}<span class="dot ${w}" aria-hidden="true"></span><span class="sr-only">${LEVEL_TEXT[w]}</span></span><span class="vals">${vals}</span></div>`;
   }).join('') || '<div class="empty">No tests yet.</div>';
 }
 
 /* ---------- TRENDS (rate of change) ---------- */
 function renderTrends(){
   const el=document.getElementById('trend-cards');
-  const s=[...tests].filter(t=>t.no3!=null).sort((a,b)=>a.date.localeCompare(b.date));
+  // Only readings the engine accepts feed the trend; a NaN or typo'd value
+  // would otherwise print "NaN ppm/week" or crash the KH card below.
+  const s=[...tests].filter(t=>valid('no3',t.no3)).sort((a,b)=>a.date.localeCompare(b.date));
   let html='';
-  if(s.length>=2){
-    const a=s[s.length-2], b=s[s.length-1];
-    const days=Math.max(1,(new Date(b.date)-new Date(a.date))/864e5);
-    const rate=((b.no3-a.no3)/days*7).toFixed(1);
+  const pair=nitrateInterval(s);
+  if(pair){
+    const [a,b]=pair;
+    const rate=nitrateRate(a,b);
     const rising=rate>0;
     const lvl = rate>10 ? 'bad' : rate>5 ? 'warn' : 'good';
     html += `<div class="card ${lvl==='good'?'':''}"><div class="trend">
@@ -98,12 +131,38 @@ function renderTrends(){
         rising?'Gentle, normal accumulation. Weekly changes are keeping up.':
         'Flat or falling — your maintenance is winning.'}</small></div>
     </div></div>`;
-  } else html='<div class="empty">Log at least two tests to see trends.</div>';
+  } else html='<div class="empty">Log at least two tests on different days to see trends.</div>';
   // KH watch
-  const k=[...tests].filter(t=>t.kh!=null).sort((a,b)=>b.date.localeCompare(a.date))[0];
-  if(k){ const r=RULES.kh(k.kh); html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${k.kh} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
+  const k=[...tests].filter(t=>valid('kh',t.kh)).sort((a,b)=>b.date.localeCompare(a.date))[0];
+  if(k){ const r=verdict('kh',k.kh); html+=`<div class="card"><div class="trend"><div><small>Latest KH buffer</small><div class="big" style="color:var(--${r.level})">${esc(num(k.kh))} <small>dKH</small></div></div><div style="text-align:right;max-width:55%"><small>${r.action||r.meaning}</small></div></div></div>`; }
   el.innerHTML=html;
   drawChart();
+}
+
+/* ---------- calculation helpers (pure, unit-tested in tests/calc.test.js) ---------- */
+// Whole days between two ISO dates. Date-only strings parse as UTC midnight
+// (ECMA-262 date-time string format), so DST changes never add or drop an hour.
+const daysBetween=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5);
+// Latest nitrate reading vs the most recent one from an EARLIER day. A same-day
+// retest is not a trend: dividing by a clamped 1 day turned a 10→20 retest into
+// "+70 ppm/week". s must be sorted by date ascending. Returns [a,b] or null.
+function nitrateInterval(s){
+  const b=s[s.length-1]; if(!b) return null;
+  for(let i=s.length-2;i>=0;i--) if(daysBetween(s[i].date,b.date)>=1) return [s[i],b];
+  return null;
+}
+const nitrateRatePerWeek=(a,b)=>(num(b.no3)-num(a.no3))/daysBetween(a.date,b.date)*7;
+// Chart x positions proportional to elapsed time, not to the test's index:
+// a 5-month gap and a 12-day gap must not look the same width.
+function chartXs(dates,W,pad){
+  const t=dates.map(d=>Date.parse(d)), t0=t[0], span=t[t.length-1]-t0;
+  return t.map((v,i)=> pad + (span>0 ? (v-t0)/span : (dates.length>1 ? i/(dates.length-1) : 0))*(W-2*pad));
+}
+// ppm/week between two tests, one decimal, as a string ("-0.0" normalised to "0.0").
+function nitrateRate(a,b){
+  const days=Math.max(1,(new Date(b.date)-new Date(a.date))/864e5);
+  const r=((num(b.no3)-num(a.no3))/days*7).toFixed(1);
+  return r==='-0.0'?'0.0':r;
 }
 
 function drawChart(){
@@ -114,19 +173,19 @@ function drawChart(){
   if(s.length<2){ return; }
   const series={no3:'#22d3ee', kh:'#fbbf24'};
   const pad=24*devicePixelRatio;
-  const xs=s.map((t,i)=> pad + i*(W-2*pad)/(s.length-1));
-  const all=s.flatMap(t=>[t.no3,t.kh]).filter(v=>v!=null&&!isNaN(v));
+  const xs=chartXs(s.map(t=>t.date),W,pad);
+  const all=s.flatMap(t=>['no3','kh'].filter(k=>valid(k,t[k])).map(k=>num(t[k])));
   const max=Math.max(20,...all)*1.15;
   const y=v=> H-pad - (v/max)*(H-2*pad);
   ctx.lineWidth=2*devicePixelRatio;
   for(const [k,col] of Object.entries(series)){
     ctx.strokeStyle=col; ctx.beginPath(); let started=false;
-    s.forEach((t,i)=>{ if(t[k]==null||isNaN(t[k]))return; const X=xs[i],Y=y(t[k]); started?ctx.lineTo(X,Y):ctx.moveTo(X,Y); started=true;
+    s.forEach((t,i)=>{ if(!valid(k,t[k]))return; const X=xs[i],Y=y(num(t[k])); started?ctx.lineTo(X,Y):ctx.moveTo(X,Y); started=true;
       ctx.fillStyle=col; });
     ctx.stroke();
-    s.forEach((t,i)=>{ if(t[k]==null||isNaN(t[k]))return; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xs[i],y(t[k]),3*devicePixelRatio,0,7); ctx.fill(); });
+    s.forEach((t,i)=>{ if(!valid(k,t[k]))return; ctx.fillStyle=col; ctx.beginPath(); ctx.arc(xs[i],y(num(t[k])),3*devicePixelRatio,0,7); ctx.fill(); });
   }
-  document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate</span><span><i style="background:#fbbf24"></i>KH buffer</span>';
+  document.getElementById('legend').innerHTML='<span><i style="background:#22d3ee"></i>NO₃ nitrate (ppm)</span><span><i style="background:#fbbf24"></i>KH buffer (dKH)</span>';
 }
 
 /* ---------- FEEDING ---------- */
@@ -162,20 +221,22 @@ const PLAYBOOK=[
 ];
 function renderPlaybook(){
   document.getElementById('playbook').innerHTML = PLAYBOOK.map(p=>`
-    <details class="pb"><summary>${p.sym}<span>＋</span></summary>
+    <details class="pb"><summary>${p.sym}<span aria-hidden="true">＋</span></summary>
       <div class="body"><div class="first">First: ${p.first}</div><div class="then">Then: ${p.then}</div></div></details>`).join('');
 }
 
 /* ---------- HOLIDAY HANDOVER (no competitor does this) ---------- */
+// Whole days, at least 1; blank or nonsense falls back to a week.
+const handoverDays = (raw) => { const n = Math.round(Number(raw)); return Number.isFinite(n) && n >= 1 ? Math.min(n, 365) : 7; };
 function renderHandover(){
-  const days=+document.getElementById('h-days').value||7;
+  const days=handoverDays(document.getElementById('h-days').value);
   const friend=esc(document.getElementById('h-friend').value.trim());
   const visits=Math.max(1,Math.ceil(days/3));
   const last=[...tests].sort((a,b)=>b.date.localeCompare(a.date))[0];
   const el=document.getElementById('handover');
   el.innerHTML=`<div class="sheet" id="sheet">
     <h2><span aria-hidden="true">🐟</span> Tankmate handover — ${days} days${friend?` · for ${friend}`:''}</h2>
-    <p>Tank: <b>Fluval Flex 57 L</b>. Last water test ${last?last.date:'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
+    <p>Tank: <b>Fluval Flex 57 L</b>. Last water test ${last?esc(last.date):'—'}: everything was ${last&&worst(last)==='good'?'healthy':'see notes'}. Thank you! The fish need very little — <b>the danger is doing too much, not too little.</b></p>
     <div class="box"><b>Every day — morning only</b><ul>
       <li>One 3-finger pinch of the granules in the labelled pot. That's it for the day.</li>
       <li>Glance: are the fish swimming normally? Is the water clear? Is the light on its timer?</li>
@@ -187,28 +248,32 @@ function renderHandover(){
       <li>If I say so after seeing a photo: 25–30% water change. Buckets + dechlorinator drops are under the tank, steps taped to the lid.</li>
       <li>Never clean the filter sponge. Never add anything else.</li></ul></div>
     <p style="font-size:12px;color:#555">Generated by Tankmate. Print this and tape it by the tank.</p>
-    <button type="button" class="print" onclick="window.print()"><span aria-hidden="true">🖨️</span> Print / Save as PDF</button>
+    <button type="button" class="print" id="h-print"><span aria-hidden="true">🖨️</span> Print / Save as PDF</button>
   </div>`;
+  // Wired here rather than with an inline onclick, so a Content-Security-Policy
+  // without 'unsafe-inline' can be added later without breaking printing.
+  document.getElementById('h-print').addEventListener('click',()=>window.print());
 }
 
 /* ---------- form + tabs + wiring ---------- */
-document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+document.getElementById('f-date').value=localDate();
 document.getElementById('testform').addEventListener('submit',e=>{
   e.preventDefault();
   const g=id=>{const v=document.getElementById(id).value; return v===''?null:+v;};
-  const t={date:document.getElementById('f-date').value||new Date().toISOString().slice(0,10),
+  const t={date:document.getElementById('f-date').value||localDate(),
     nh3:g('f-nh3'),no2:g('f-no2'),no3:g('f-no3'),kh:g('f-kh'),ph:g('f-ph'),gh:g('f-gh'),temp:g('f-temp'),
     note:document.getElementById('f-note').value.trim()};
-  tests.push(t); save(tests);
+  tests.push(t); const saved=save(tests);
   renderVerdicts(t, document.getElementById('verdicts'));
+  if(!saved) document.getElementById('verdicts').insertAdjacentHTML('afterbegin','<div class="verdict bad" role="alert"><p><b>Not saved:</b> this browser refused to store the test (storage full or private mode). It will be lost when you close the app.</p></div>');
   renderHistory(); renderTrends();
   document.getElementById('verdicts').scrollIntoView({behavior:motionOK()?'smooth':'auto',block:'start'});
-  e.target.reset(); document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  e.target.reset(); document.getElementById('f-date').value=localDate();
 });
 
 function show(tab){
   document.querySelectorAll('.tab').forEach(s=>s.classList.toggle('active',s.id==='tab-'+tab));
-  document.querySelectorAll('.tabbar button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
+  document.querySelectorAll('.tabbar button').forEach(b=>{ const on=b.dataset.tab===tab; b.classList.toggle('active',on); on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current'); });
   if(tab==='trends')drawChart();
 }
 // The tab bar sits after <main> in the DOM, so after choosing a tab keyboard and
@@ -228,4 +293,4 @@ window.addEventListener('resize',drawChart);
 if(navigator.storage&&navigator.storage.persist){ navigator.storage.persisted().then(p=>p||navigator.storage.persist()).catch(()=>{}); }
 
 // PWA
-if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(err=>console.warn('Tankmate: service worker not registered', err)); }

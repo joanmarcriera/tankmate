@@ -2,9 +2,19 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<!-- This page loads no scripts and nothing from other sites; the policy makes that a guarantee. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0b3d4f">
 <title>Support — Tankmate</title>
+<meta name="description" content="How to get help with Tankmate, the aquarium water-test co-pilot, and answers to common questions.">
+<link rel="canonical" href="https://tankmate.joanmarcriera.es/support/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tankmate">
+<meta property="og:title" content="Support — Tankmate">
+<meta property="og:description" content="How to get help with Tankmate, the aquarium water-test co-pilot, and answers to common questions.">
+<meta property="og:url" content="https://tankmate.joanmarcriera.es/support/">
+<link rel="icon" href="../icon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../styles.css">
 </head>
 <body>
@@ -15,6 +25,7 @@
 <main>
   <h1>Support</h1>
   <p class="sub">Tankmate is made by one person. Mail goes to a real inbox.</p>
+  <p class="sub">Last updated 9 November 2026</p>
 
   <div class="card">
     <p><b>Email</b> — <a href="mailto:joanmarcriera@gmail.com">joanmarcriera@gmail.com</a>.
@@ -30,9 +41,19 @@
     clear your browser data or delete the app.</p>
   </div>
   <div class="card">
+    <p><b>Can I back up my history or move it to another device?</b> Not yet. There is no export
+    and no sync, so a test you log on your phone is not visible on your laptop. The history also
+    belongs to the address you use, so the same browser on a different web address starts empty.</p>
+  </div>
+  <div class="card">
+    <p><b>Can it remind me to test the water?</b> In the iOS app, yes: tap the bell in the header
+    to set a weekly reminder, which iOS schedules on your device. The website cannot schedule
+    reminders on iOS, so there it is up to you.</p>
+  </div>
+  <div class="card">
     <p><b>Does it work offline?</b> Yes. The iOS app bundles everything it needs and makes no
-    network requests. On the web, add Tankmate to your Home Screen and it keeps working without a
-    signal.</p>
+    network requests. On the web, open Tankmate once with a connection and add it to your Home
+    Screen; after that it keeps working without a signal.</p>
   </div>
   <div class="card">
     <p><b>The verdicts do not match my test kit's chart.</b> Tankmate is tuned for freshwater
@@ -44,6 +65,9 @@
     <p><b>Multiple tanks, photos, sync?</b> Not yet. Tankmate does one tank well on purpose. Tell
     me what you need and it goes on the list.</p>
   </div>
+<footer style="text-align:center;color:var(--mut);font-size:13px;padding:18px 0 4px">
+    Made by Marc · <a href="../privacy/">Privacy</a> · <a href="../support/">Support</a>
+  </footer>
 </main>
 </body>
 </html>
